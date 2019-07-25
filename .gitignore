@@ -1,0 +1,7 @@
+*.egg-info
+00-app-config.sh
+.ipynb_checkpoints
+tfrecords/
+tmp*
+*.pyc
+.pytest_cache/

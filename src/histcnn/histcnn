@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+import sys
+import argparse
+from histcnn.argparsefuncs import *
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    if len(sys.argv)==1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    subparsers = parser.add_subparsers()
+    
+    #### gcs_parser ####   
+    gcs_parser = subparsers.add_parser("gcs", help='GCS-related commands', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    gcs_parser.add_argument('--project', type=str, default=None, required=True, metavar='<value>', help='project id on GC')
+    gcs_parser.add_argument("--checkpath", type=str, metavar='<path>', 
+                            help="Check if path exists on gcs. status:0 -> file exists; status:1 -> file does not exist")
+    gcs_parser.add_argument("--download_dir", type=str, default=None, metavar='<path>',
+                            help='If provided, sets the local path where the file should be downloaded. Otherwise no download will occur')
+    gcs_parser.add_argument("--print_status", action="store_true", 
+                            help='print output status (whether file exists)') 
+    gcs_parser.set_defaults(func=checkpath)
+
+    ### ann_parser ####
+    ann_parser = subparsers.add_parser('annotate', help='Annotate the input samples', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    ann_parser.add_argument("--gcs-path-list", required=True, type=str, metavar='<path>', help='Text file containing the list of files on GCS to be used as inputs to CNN')
+    ann_parser.add_argument("--train-test-percentage", default=[70, 15], type=float, nargs=2, metavar='<value>',
+                            help="holdout percentages provided as the list [training, test]")
+    ann_parser.add_argument("--output-file", required=True, type=str, metavar='<path>',
+                            help = "File where the annotation results are saved.")                        
+    ann_parser.add_argument("--lstrip-string", default="", type=str, metavar="<value>",
+                            help="The string to remove from the begining of GCS urls in order to construct local paths (usually has the form: lstrip_string = 'gs://' + bucket_name + '/')")
+    ann_parser.add_argument("--tissue", default=None, type=str, metavar="<value>",
+            help="If provided subtype annotation based on tissue type provided will be included into the final annotation file")
+    ann_parser.add_argument("--drop-normals", action="store_true", help='remove normal samples before assigning cross-validation groups')
+    ann_parser.set_defaults(func=annotate_inputs)    
+
+    ### run_subtype_parser
+    runsubtype_parser = subparsers.add_parser("run-subtype", formatter_class=argparse.ArgumentDefaultsHelpFormatter, help='run subtype classification code')
+    runsubtype_parser.add_argument('--tissue', required=True, metavar="<value>", type=str, help='tissue type to do the subtype classification on')
+    runsubtype_parser.add_argument('--annotations-path', required=True, metavar="<path>", type=str,
+                        help='relative path of the annotation files. Example: data/pancancer_annotations/subtypes_annotations')
+    runsubtype_parser.add_argument('--results-path', required=True, metavar="<path>", type=str,
+                        help='relative path of the output folder to store results. Example: data/run-results/undersampled_subtype_with_relu/')
+    runsubtype_parser.add_argument('--pancancer-tfrecords-path', required=True, metavar="<path>", type=str,
+                        help='relative path of the TFRecord files. Example: tfrecords/cache_subtypes')      
+    runsubtype_parser.add_argument('--training-steps', default=2000, type=int, metavar='<value>',
+                        help='number of training steps')
+    runsubtype_parser.add_argument('--dropout-keep-prob', default = 0.8, type=float, metavar='<value>',
+                        help = 'dopout keep probability (1-droupout)')
+    runsubtype_parser.add_argument('--optimizer', default = 'adam', type=str, metavar='<value>',
+                        help='SGD optimizer') 
+    runsubtype_parser.add_argument('--is-weighted', default = 0, action='store_const', const=1,
+                        help='if this is set use weighting for the corss entropy')
+    runsubtype_parser.add_argument('--treat-validation-as-test', action='store_true', 
+                        help='treat validation set as if it is also test set (effectively adding more samples to test set)')
+    runsubtype_parser.add_argument('--do-not-train', action='store_true', help="only test (load model from disk)") 
+    runsubtype_parser.add_argument('--avoid-gpu-for-testing', action='store_true', help="avoid using GPUs for testing (if GPUs are available)")
+    runsubtype_parser.add_argument("--train-test-percentage", default=[70, 15], type=float, nargs=2, metavar='<value>',
+                        help="holdout percentages provided as the list [training, test]")
+    runsubtype_parser.set_defaults(func=run_subtype_classification)    
+
+    args = parser.parse_args()
+    args.func(args)

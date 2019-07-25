@@ -1,0 +1,17 @@
+numpy
+pandas
+tensorflow
+tqdm
+openslide-python
+flask
+pandas-gbq
+tensorflow
+google-cloud
+google-cloud-storage
+google-cloud-pubsub
+google-cloud-datastore
+scipy
+matplotlib
+seaborn
+scikit-image
+scikit-learn

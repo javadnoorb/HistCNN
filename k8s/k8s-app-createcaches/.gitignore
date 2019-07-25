@@ -1,0 +1,4 @@
+data/*
+!data/TCGA_slide_images_metadata.txt
+
+00-app-config.sh
