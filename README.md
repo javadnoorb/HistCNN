@@ -2,6 +2,12 @@ This package is an implementation of Inception-v3 CNN to classify TCGA H&E whole
 
 ![schematic of the analysis pipeline](schematic.png)
 
+For details, please see the manuscript preprint:
+
+Javad Noorbakhsh, Saman Farahmand, Mohammad Soltanieh-ha, Sandeep Namburi, Kourosh Zarringhalam, Jeff Chuang, 
+*Pan-cancer classifications of tumor histological images using deep learning*, bioRxiv 715656 
+https://doi.org/10.1101/715656
+
 # Installation
 To properly use the pipelines, you will need to install the package. After changing current directoty to the root of the project run:
 ```bash
