@@ -9,7 +9,7 @@ Javad Noorbakhsh, Saman Farahmand, Mohammad Soltanieh-ha, Sandeep Namburi, Kouro
 https://doi.org/10.1101/715656
 
 # Installation
-To properly use the pipelines, you will need to install the package. After changing current directoty to the root of the project run (for now this only works in the development mode):
+To properly use the pipelines, you will need to install the package. After changing current directory to the root of the project run (for now this only works in the development mode):
 ```bash
 pip install -e .
 ```
