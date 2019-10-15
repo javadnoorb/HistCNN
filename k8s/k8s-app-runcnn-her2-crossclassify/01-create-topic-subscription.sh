@@ -21,10 +21,10 @@ if [ ! -e 00-app-config.sh ]; then
   echo -e "export deployment_name='${job_tag//_/-}'  # will be used for deployment, container, and pod." >> 00-app-config.sh
   echo -e "export max_replica=16  # will be used for the max replica to be launched in deplyoment" >> 00-app-config.sh
   echo -e "export ack_deadline_seconds=60  # Pub/Sub deadline from 0 to 600" >> 00-app-config.sh
-  echo -e "export annotations_path='data/pancancer_annotations/her2_frozen_cache_anns' #path of annotation files" >> 00-app-config.sh
-  echo -e "export results_path='data/run-results/frozen_undersampled_her2/' # where to save the outputs of the run" >> 00-app-config.sh
-  echo -e "export pancancer_tfrecords_path='tfrecords/frozen/her2' # tfrecords path" >> 00-app-config.sh
-  echo -e "export gcs_output_path='gs://histology-cnn/data/her2/cross-classification-frozen/include-training/' # GCS path for saving output jsons that contain AUCs" >> 00-app-config.sh  
+  echo -e "export annotations_path='data/pancancer_annotations/her2_cache_anns' #path of annotation files" >> 00-app-config.sh
+  echo -e "export results_path='data/run-results/undersampled_her2/' # where to save the outputs of the run" >> 00-app-config.sh
+  echo -e "export pancancer_tfrecords_path='tfrecords/her2' # tfrecords path" >> 00-app-config.sh
+  echo -e "export gcs_output_path='gs://histology-cnn/data/her2/cross-classification/include-training/' # GCS path for saving output jsons that contain AUCs" >> 00-app-config.sh  
 gcs_output_path = GCS_OUTPUT_PATH  
 return
 fi

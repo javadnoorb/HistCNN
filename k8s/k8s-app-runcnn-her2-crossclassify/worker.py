@@ -89,7 +89,7 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
         tfrecordfileslist += glob.glob(tfrecpath+'*.training')
     else:
         image_files_metadata = image_files_metadata[image_files_metadata['crossval_group']!='training']
-        
+
 #     test_batch_size = run_classification.get_total_tfrec_count(tfrecordfileslist)
     test_batch_size = len(image_files_metadata)
 
