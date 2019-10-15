@@ -44,7 +44,13 @@ spec:
           requests:
             cpu: 2000m
             memory: 5000Mi
-      restartPolicy: Always
+        volumeMounts:
+        - name: google-cloud-key
+          mountPath: /var/secrets/google
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json      
+      restartPolicy: Always          
 """ > deployment.yaml
 
 kubectl apply -f deployment.yaml

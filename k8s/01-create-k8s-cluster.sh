@@ -47,14 +47,27 @@ gcloud components install kubectl
 
 echo -e "\nCreating a Kubernetes cluster named $cluster_name\n"
 set -o xtrace
+
 gcloud container clusters create $cluster_name \
-  --machine-type=n1-highmem-8 \
-  --num-nodes=1 --preemptible \
-  --disk-type=pd-ssd --disk-size=200GB \
-  --enable-autoscaling \
-  --min-nodes=0 --max-nodes=$max_node \
-  --zone $zone_name \
-  --scopes storage-rw
+    --machine-type=n1-highmem-8 \
+    --num-nodes=1 --preemptible \
+    --disk-type=pd-ssd --disk-size=200GB \
+    --enable-autoscaling \
+    --min-nodes=0 --max-nodes=$max_node \
+    --zone $zone_name \
+    --scopes storage-rw \
+    --scopes "https://www.googleapis.com/auth/cloud-platform" \
+    --enable-private-nodes \
+    --master-ipv4-cidr "172.18.0.0/28" \
+    --enable-ip-alias \
+    --network "projects/jax-shared-vpc-host-gen/global/networks/jax-gen-us-east-1-vpc" \
+    --subnetwork "projects/jax-shared-vpc-host-gen/regions/us-east1/subnetworks/jax-gen-us-east1-s8" \
+    --cluster-secondary-range-name "jax-gen-us-east1-s8-pods" \
+    --services-secondary-range-name "jax-gen-us-east1-s8-services" \
+    --default-max-pods-per-node "10" \
+    --enable-master-authorized-networks \
+    --master-authorized-networks 162.221.11.64/26
+
 set +o xtrace
 
 echo -e "\nIf you got quota error either lower the number of CPUs in the query or consider increasing your cpu limit to a higher number by following these steps:"
