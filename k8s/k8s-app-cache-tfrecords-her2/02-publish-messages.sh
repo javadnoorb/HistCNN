@@ -49,7 +49,7 @@ publish_jobs_single_cancertype()
 {
     cancertype=$1
     echo -e "Saving temporary files to $temp_path"
-    caches_path="gs://histologyi-cnn/tcga_tiles/pancancer/$cancertype/${cancertype}_512x512_cache/"
+    caches_path="gs://${caches_input_bucket}/tcga_tiles/pancancer/$cancertype/${cancertype}_512x512_cache/"
 
     histcnn gcs --checkpath "$gcs_ann_path/$cancertype/caches_gcs_path_list.txt" --download_dir $temp_path --project $project_id
 

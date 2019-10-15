@@ -17,17 +17,21 @@ def get_project_id():
     return project_id
 
 class gcsbucket:
-    def __init__(self, project_name=None, bucket_name=None):
+    def __init__(self, project_name=None, bucket_name=None, user_project=None):
         if project_name is None:
 #           project_name = get_project_id()
             raise Exception('Please provide the project id.')
         self.project_name = project_name
         self.bucket_name = bucket_name
+        if user_project == None:
+            self.user_project = self.project_name
+        else:
+            self.user_project = user_project
         self.make_bucket()
         
     def make_bucket(self):    
         client = storage.Client(project = self.project_name)
-        self.bucket = client.get_bucket(self.bucket_name)        
+        self.bucket = client.bucket(self.bucket_name, user_project=self.user_project)
         
     def _copy_single_file_to_gcs(self, input_file, output_file, verbose=False):
         if verbose:
