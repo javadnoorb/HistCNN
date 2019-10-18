@@ -21,6 +21,7 @@ import json
 import glob
 
 project_id = PROJECT_ID
+payer_project_id = PAYER_PROJECTID
 subscription_name = SUBSCRIPTION_NAME
 input_bucket = INPUT_BUCKET
 task_kind = TASK_KIND
@@ -73,15 +74,15 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
     image_file_metadata_filename = os.path.join('/sdata', annotations_path, cancertype2, 'caches_basic_annotations.txt')
 
     print('copying files from GCS')
-    util.gsutil_cp('gs://'+input_bucket+'/'+saved_model_path[len('/sdata/'):]+'*', saved_model_path, make_dir=True)
-    util.gsutil_cp('gs://'+input_bucket+'/'+tfrecpath[len('/sdata/'):]+'*.testing', tfrecpath, make_dir=True)
-    util.gsutil_cp('gs://'+input_bucket+'/'+tfrecpath[len('/sdata/'):]+'*.validation', tfrecpath, make_dir=True)
+    util.gsutil_cp('gs://'+input_bucket+'/'+saved_model_path[len('/sdata/'):]+'*', saved_model_path, make_dir=True, payer_project_id=payer_project_id)
+    util.gsutil_cp('gs://'+input_bucket+'/'+tfrecpath[len('/sdata/'):]+'*.testing', tfrecpath, make_dir=True, payer_project_id=payer_project_id)
+    util.gsutil_cp('gs://'+input_bucket+'/'+tfrecpath[len('/sdata/'):]+'*.validation', tfrecpath, make_dir=True, payer_project_id=payer_project_id)
     if include_training_set:
-        util.gsutil_cp('gs://'+input_bucket+'/'+tfrecpath[len('/sdata/'):]+'*.training', tfrecpath, make_dir=True)
-    util.gsutil_cp('gs://'+input_bucket+'/'+image_file_metadata_filename[len('/sdata/'):], image_file_metadata_filename, make_dir=False)
+        util.gsutil_cp('gs://'+input_bucket+'/'+tfrecpath[len('/sdata/'):]+'*.training', tfrecpath, make_dir=True, payer_project_id=payer_project_id)
+    util.gsutil_cp('gs://'+input_bucket+'/'+image_file_metadata_filename[len('/sdata/'):], image_file_metadata_filename, make_dir=False, payer_project_id=payer_project_id)
 
     image_files_metadata = pd.read_csv(image_file_metadata_filename, sep=',')
-    image_files_metadata.rename(columns={'is_tumor':'label'}, inplace=True)
+    image_files_metadata.rename(columns={'cnv':'label'}, inplace=True)
     image_files_metadata['label_name'] = image_files_metadata['label'].map(lambda x: ['normal', 'tumor'][x])
 
     tfrecordfileslist = glob.glob(tfrecpath+'*.testing') + glob.glob(tfrecpath+'*.validation')
@@ -93,12 +94,10 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
 #     test_batch_size = run_classification.get_total_tfrec_count(tfrecordfileslist)
     test_batch_size = len(image_files_metadata)
 
-    labal_names = ['is_tumor']
+    labal_names = ['cnv']
     nClass = 2
     print('running the CNN')
-#     test_accuracies_list, predictions_list, confusion_matrices_list, imagefilenames, final_softmax_outputs_list = \
-#     run_classification.test_multilabel_classification_with_inception_CNN(labal_names, tfrecordfileslist = tfrecordfileslist,
-#                                                                          saved_model_path=saved_model_path, nClass=nClass, test_batch_size = test_batch_size)
+
     test_accuracies_list, predictions_list, confusion_matrices_list, imagefilenames, final_softmax_outputs_list = \
     run_classification.test_multilabel_classification_with_inception_CNN_fast(image_files_metadata, labal_names, tfrecordfileslist = tfrecordfileslist,
                                                       saved_model_path = saved_model_path, nClass = nClass, test_batch_size = test_batch_size)
@@ -115,7 +114,7 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
     jsonfile = 'roc_auc_{:s}_{:s}.json'.format(cancertype1, cancertype2)	
     json.dump(roc_auc, open(jsonfile, 'w'))
 
-    util.gsutil_cp(jsonfile, gcs_output_path)
+    util.gsutil_cp(jsonfile, gcs_output_path, payer_project_id=payer_project_id)
 
     # save output to pickle file
     pickle_dir = os.path.join(results_path, 'pickles/pickles_train{:d}_test{:d}_pickled/'.format(*train_test_percentage))    
@@ -126,7 +125,7 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
                  confusion_matrices_list, imagefilenames, final_softmax_outputs_list], 
                 open('/sdata/' + pickle_path, 'wb'))
 
-    util.gsutil_cp(os.path.join('/sdata', pickle_path), os.path.join('gs://'+input_bucket, pickle_path))
+    util.gsutil_cp(os.path.join('/sdata', pickle_path), os.path.join('gs://'+input_bucket, pickle_path), payer_project_id=payer_project_id)
     
 def worker(msg):
     start_time = time.time()
