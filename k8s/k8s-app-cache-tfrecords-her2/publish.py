@@ -4,13 +4,15 @@ from tqdm import tqdm
 import numpy as np
 import time
 import os
+import sys
 from math import ceil
 
 project_id = os.environ['project_id']
 topic_name = os.environ['topic_name']
-cancertype = os.environ['cancertype']
 task_kind = os.environ['task_kind']
 category = os.environ['category']
+cancertype = sys.argv[1]
+
 tfrecords_output_bucket = os.environ['tfrecords_output_bucket']
 shard_length = int(os.environ['shard_length'])
 temp_path = os.environ['temp_path']

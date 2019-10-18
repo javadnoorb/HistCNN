@@ -36,6 +36,8 @@ if __name__ == "__main__":
     ann_parser.add_argument("--tissue", default=None, type=str, metavar="<value>",
             help="If provided subtype annotation based on tissue type provided will be included into the final annotation file")
     ann_parser.add_argument("--drop-normals", action="store_true", help='remove normal samples before assigning cross-validation groups')
+    ann_parser.add_argument("--her2-amplification", action="store_true", help='include HER2 amplifications for each sample')
+    
     ann_parser.set_defaults(func=annotate_inputs)    
 
     ### run_subtype_parser

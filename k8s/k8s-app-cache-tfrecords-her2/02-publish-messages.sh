@@ -17,6 +17,7 @@ credentials_path=`eval echo "~"`'/.config/service-key.json'
 export GOOGLE_APPLICATION_CREDENTIALS="$credentials_path"
 
 echo -e "project_id: $project_id"
+echo -e "payer_project_id: $payer_project_id" 
 echo -e "zone_name: $zone_name"
 echo -e "cluster_name: $cluster_name"
 echo -e "caches_input_bucket: $caches_input_bucket"
@@ -49,31 +50,41 @@ publish_jobs_single_cancertype()
 {
     cancertype=$1
     echo -e "Saving temporary files to $temp_path"
-    caches_path="gs://${caches_input_bucket}/tcga_tiles/pancancer/$cancertype/${cancertype}_512x512_cache/"
+#     caches_path="gs://${caches_input_bucket}/tcga_tiles/pancancer/$cancertype/${cancertype}_512x512_cache/"
+    caches_path="gs://histology-tmp/tcga_tiles/pancancer/$cancertype/${cancertype}_512x512_cache/"
 
-    histcnn gcs --checkpath "$gcs_ann_path/$cancertype/caches_gcs_path_list.txt" --download_dir $temp_path --project $project_id
+    histcnn gcs --checkpath "$gcs_ann_path/$cancertype/caches_gcs_path_list.txt" \
+            --download_dir $temp_path \
+            --project $project_id \
+            --payer-project $payer_project_id
+
 
     if [ $? -ne 0 ]; then
-      echo -e "Fetching tile names on GCS ($caches_path). This may take several minutes..."
-      gsutil -m ls "${caches_path}*.svs/*.txt" > "$temp_path/caches_gcs_path_list.txt"
-      gsutil cp "$temp_path/caches_gcs_path_list.txt" "$gcs_ann_path/$cancertype/caches_gcs_path_list.txt"
+      echo -e "Fetching cache names on GCS ($caches_path). This may take several minutes..."
+      gsutil -u $payer_project_id -m ls "${caches_path}*.svs/*.txt" > "$temp_path/caches_gcs_path_list.txt"
+      gsutil -u $payer_project_id -m cp "$temp_path/caches_gcs_path_list.txt" "$gcs_ann_path/$cancertype/caches_gcs_path_list.txt"
       echo -e "Saved to $gcs_ann_path/$cancertype/caches_gcs_path_list.txt"
     fi
 
     echo -e "Printing a few lines from the file:"
     head -n 5 $temp_path/caches_gcs_path_list.txt
-
-    histcnn gcs --checkpath "$gcs_ann_path/$cancertype/caches_basic_annotations.txt" --download_dir $temp_path --project $project_id
+    
+    annfile="caches_basic_annotations.txt"
+    histcnn gcs --checkpath "$gcs_ann_path/$cancertype/$annfile" --download_dir $temp_path --project $project_id
     if [ $? -ne 0 ]; then
-      echo -e "\nExecuting assign_validation_and_other_labels_to_caches.py:"
-      python assign_validation_and_other_labels_to_caches.py $temp_path
-      gsutil cp "$temp_path/caches_basic_annotations.txt" "$gcs_ann_path/$cancertype/caches_basic_annotation.txt"
-      echo -e "Saved to $gcs_ann_path/$cancertype/caches_basic_annotation.txt"
+      echo -e "\nAssigning labels to tiles:"
+#       python assign_validation_and_other_labels_to_caches.py $temp_path
+      
+      histcnn annotate --gcs-path-list "$temp_path/caches_gcs_path_list.txt"  --output-file \
+      $temp_path/$annfile --drop-normals --lstrip-string gs://histology-tmp/ --her2-amplification
+
+      gsutil -u $payer_project_id -m cp "$temp_path/$annfile" "$gcs_ann_path/$cancertype/$annfile"
+      echo -e "Saved to $gcs_ann_path/$cancertype/$annfile"
     fi
 
     # Publishing messages
     echo -e "\nPublishing the messages:"
-    python publish.py
+    python publish.py $cancertype
 }
 
 clear_subscription

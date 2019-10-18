@@ -15,7 +15,9 @@ import sys
 import re
 from tqdm import tqdm
 
+
 project_id = PROJECT_ID
+payer_project_id = PAYER_PROJECTID
 subscription_name = SUBSCRIPTION_NAME
 tiles_input_bucket = TILES_INPUT_BUCKET
 task_kind = TASK_KIND
@@ -77,28 +79,19 @@ def worker(msg):
 
     print('Loading metadata...')
     image_file_metadata_filename = 'data/caches_basic_annotations.txt'
-    util.gsutil_cp('{}/{}/caches_basic_annotations.txt'.format(gcs_ann_path, cancertype), 'data/', make_dir=True)
+    util.gsutil_cp('{}/{}/caches_basic_annotations.txt'.format(gcs_ann_path, cancertype), 'data/', make_dir=True, payer_project_id=payer_project_id)
     image_files_metadata = pd.read_csv(image_file_metadata_filename, skiprows=range(1, shard_index*shard_length+1), nrows=shard_length)
-
+    
     shard_length_tiles = len(image_files_metadata.index)
 
-    label_names = ['is_tumor']
+    label_names = ['cnv']
 
     print('Downloading cache files...')
     image_files_metadata['cache_values'] = choose_input_list.load_cache_values(image_files_metadata, 
                                                                                bucket_name = tiles_input_bucket,
-                                                                               notebook = False)
-    
-#    print('Downloading tiles...')
-#    bucket = handle_google_cloud_apis.gcsbucket(project_id, tiles_input_bucket)
-#    def download_tile(df_row, bucket):
-#        gcs_rel_path = df_row['GCSurl'][len('gs://' + bucket.bucket_name)+1:]
-#        bucket.download_from_gcs(gcs_rel_path, output_dir=df_row['rel_path'])
+                                                                               notebook = False, user_project=payer_project_id)
 
-#    tqdm.pandas()
-#    image_files_metadata.progress_apply(lambda df_row: download_tile(df_row, bucket), axis=1)
-
-    crossval_groups = ['training','testing','validation']
+    crossval_groups = ['training', 'testing', 'validation']
     if category not in crossval_groups+['all']:
         raise Exception('Unknown cross validation category.')
 

@@ -3,6 +3,7 @@ if [ ! -e 00-project-config.sh ]; then
   echo -e "Error: 00-project-config.sh not found! A template was created for you. Please complete it with your specific project/cluster values and try again.\n"
   echo "#!/bin/bash" > 00-project-config.sh
   echo -e "export project_id='jax-nihcc-res-00-0011' # Fill me out with proper project name" >> 00-project-config.sh
+  echo -e "export payer_project_id=\$project_id # Change if a different project is used for payments to access buckets" >> 00-project-config.sh
   echo -e "export sa='k8s-sa-xxx' # Name for service account - fill xxx with your initials\n" >> 00-project-config.sh
   echo -e "export cluster_name='k8s-cluster'" >> 00-project-config.sh
   echo -e "export region_name='us-east1'" >> 00-project-config.sh
@@ -54,18 +55,18 @@ gcloud container clusters create $cluster_name \
     --disk-type=pd-ssd --disk-size=200GB \
     --enable-autoscaling \
     --min-nodes=0 --max-nodes=$max_node \
+    --default-max-pods-per-node 10 \
     --zone $zone_name \
     --scopes storage-rw \
     --scopes "https://www.googleapis.com/auth/cloud-platform" \
     --enable-private-nodes \
-    --master-ipv4-cidr "172.18.0.0/28" \
     --enable-ip-alias \
-    --network "projects/jax-shared-vpc-host-gen/global/networks/jax-gen-us-east-1-vpc" \
-    --subnetwork "projects/jax-shared-vpc-host-gen/regions/us-east1/subnetworks/jax-gen-us-east1-s8" \
+    --enable-master-authorized-networks \
     --cluster-secondary-range-name "jax-gen-us-east1-s8-pods" \
     --services-secondary-range-name "jax-gen-us-east1-s8-services" \
-    --default-max-pods-per-node "10" \
-    --enable-master-authorized-networks \
+    --network "projects/jax-shared-vpc-host-gen/global/networks/jax-gen-us-east-1-vpc" \
+    --subnetwork "projects/jax-shared-vpc-host-gen/regions/us-east1/subnetworks/jax-gen-us-east1-s8" \
+    --master-ipv4-cidr "172.18.0.0/28" \
     --master-authorized-networks 162.221.11.64/26
 
 set +o xtrace
@@ -75,7 +76,7 @@ echo -e "https://cloud.google.com/compute/quotas"
 echo -e "If you are using a free tier you might need to upgrade it."
 
 echo -e "\nGet authentication credentials for the cluster..."
-gcloud container clusters get-credentials $cluster_name
+gcloud container clusters get-credentials --internal-ip $cluster_name
 
 echo -e "\nConfirm cluster is running"
 gcloud container clusters list

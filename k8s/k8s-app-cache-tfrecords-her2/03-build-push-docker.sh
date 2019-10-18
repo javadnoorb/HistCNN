@@ -27,11 +27,12 @@ cp -r $histcnn_root_dir/src dockercontext/HistCNN/
 echo -e "\nCreating a temp file for docker to replace the appropriate project values:"
 cp worker.py dockercontext/dock_worker.py
 sed -i -e 's/PROJECT_ID/"'$project_id'"/g' dockercontext/dock_worker.py
+sed -i -e 's/PAYER_PROJECTID/"'$payer_project_id'"/g' dockercontext/dock_worker.py
 sed -i -e 's/SUBSCRIPTION_NAME/"'$subscription_name'"/g' dockercontext/dock_worker.py
 sed -i -e 's/TILES_INPUT_BUCKET/"'$caches_input_bucket'"/g' dockercontext/dock_worker.py
 sed -i -e 's/TASK_KIND/"'$task_kind'"/g' dockercontext/dock_worker.py
 sed -i -e 's|GCS_ANN_PATH|"'$gcs_ann_path'"|g' dockercontext/dock_worker.py
-
+payer_project_id
 echo -e "\nBuilding a docker image called ${image_name}:"
 
 # Note that in the following code ssh private key will not leave a trace in the image

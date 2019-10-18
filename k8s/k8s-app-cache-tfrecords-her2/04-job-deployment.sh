@@ -11,7 +11,7 @@ echo -e "max_replica: $max_replica"
 echo -e "image_name: $image_name"
 
 echo -e "\nGet authentication credentials for the cluster..."
-gcloud container clusters get-credentials $cluster_name
+gcloud container clusters get-credentials --internal-ip $cluster_name
 
 echo -e "\nConfirm cluster is running"
 gcloud container clusters list

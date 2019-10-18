@@ -14,7 +14,7 @@ def read_csv(obj, columns=None, **kwargs):
     
     arguments:
         obj (str or pd.DataFrame): if obj is a string (path) it uses it as
-            a csv filename and applied pd.read_csv to it. If it is a pandas dataframe,
+            a csv filename and applies pd.read_csv to it. If it is a pandas dataframe,
             it simply returns the dataframe intact.
         columns (list): if provided, will be used as the columns for the output of pd.read_csv().
             This option is only used if the input is read from a file.
@@ -43,10 +43,14 @@ def run_unix_cmd(cmd, verbose=True):
         raise Exception(error.decode())
     return output.decode()
 
-def gsutil_cp(path1, path2, make_dir=False, verbose=True):
+def gsutil_cp(path1, path2, payer_project_id=None, make_dir=False, verbose=True):
     if make_dir:
         mkdir_if_not_exist(path2)
-    cmd = 'gsutil -m cp -r {:s} {:s}'.format(path1, path2)
+    
+    if payer_project_id==None:
+        cmd = 'gsutil -m cp -r {:s} {:s}'.format(path1, path2)
+    else:
+        cmd = 'gsutil -u {:s} -m cp -r {:s} {:s}'.format(payer_project_id, path1, path2)
     if verbose:
         print('copying {:s} -> {:s}'.format(path1, path2))
     output = run_unix_cmd(cmd, verbose=verbose)

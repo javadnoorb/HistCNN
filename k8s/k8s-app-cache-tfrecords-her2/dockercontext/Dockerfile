@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get install -y gcc wget bzip2 openslide-tools vim
+RUN apt-get update && apt-get install -y gcc wget bzip2 openslide-tools vim less
 RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 RUN bash Miniconda3-latest-Linux-x86_64.sh -b
 RUN rm Miniconda3-latest-Linux-x86_64.sh
