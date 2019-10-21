@@ -55,9 +55,7 @@ def delete_task(client, task_id):
     client.delete(key)
 
 
-cancertypes = ['blca', 'brca', 'chol', 'coad', 'esca', 'hnsc', 'kich', 'kirc', 'kirp',
-               'lihc', 'luad', 'lusc', 'ov', 'paad', 'prad', 'read', 'sarc', 'stad',
-               'thca', 'ucec']
+cancertypes = ['kirp', 'ucs', 'blca', 'esca', 'luad', 'tgct', 'lusc', 'stad', 'brca', 'coadread', 'lihc']
 
 n = -1
 for cancertype in tqdm(cancertypes):

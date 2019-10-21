@@ -21,6 +21,7 @@ import pickle
 from histcnn import inception_multitasklearning_retrain as incret
 
 project_id = PROJECT_ID
+payer_project_id = PAYER_PROJECTID
 subscription_name = SUBSCRIPTION_NAME
 input_bucket = INPUT_BUCKET
 task_kind = TASK_KIND
@@ -77,8 +78,8 @@ def run_tumor_normal_classification(cancertype, how_many_training_steps = 2000, 
     tfrecords_path = os.path.join(pancancer_tfrecords_path, cancertype, '')
     print('copying files from GCS')
     input_bucket_path = 'gs://'+input_bucket+'/'
-    util.gsutil_cp(os.path.join(input_bucket_path, tfrecords_path, 'tfrecord*'), '/sdata/'+ tfrecords_path, make_dir=True)
-    util.gsutil_cp(os.path.join(input_bucket_path, image_file_metadata_filename), '/sdata/'+ image_file_metadata_filename, make_dir=False)
+    util.gsutil_cp(os.path.join(input_bucket_path, tfrecords_path, 'tfrecord*'), '/sdata/'+ tfrecords_path, make_dir=True, payer_project_id=payer_project_id)
+    util.gsutil_cp(os.path.join(input_bucket_path, image_file_metadata_filename), '/sdata/'+ image_file_metadata_filename, make_dir=False, payer_project_id=payer_project_id)
    
     # output paths
     trecords_prefix = '/sdata/'+ tfrecords_path + 'tfrecord'
@@ -122,9 +123,9 @@ def run_tumor_normal_classification(cancertype, how_many_training_steps = 2000, 
                  confusion_matrices_list, imagefilenames, final_softmax_outputs_list], 
                 open('/sdata/' + pickle_path, 'wb'))
 
-    util.gsutil_cp(os.path.join('/sdata', saved_model_path), os.path.join(input_bucket_path, saved_model_path))
-    util.gsutil_cp(os.path.join('/sdata', tensorboard_path), os.path.join(input_bucket_path, tensorboard_path))
-    util.gsutil_cp(os.path.join('/sdata', pickle_path), os.path.join(input_bucket_path, pickle_path))
+    util.gsutil_cp(os.path.join('/sdata', saved_model_path), os.path.join(input_bucket_path, saved_model_path), payer_project_id=payer_project_id)
+    util.gsutil_cp(os.path.join('/sdata', tensorboard_path), os.path.join(input_bucket_path, tensorboard_path), payer_project_id=payer_project_id)
+    util.gsutil_cp(os.path.join('/sdata', pickle_path), os.path.join(input_bucket_path, pickle_path), payer_project_id=payer_project_id)
 
 
 def worker(msg):
@@ -141,7 +142,7 @@ def worker(msg):
 
     cancertype = params['cancertype']
 
-    label_names = ['is_tumor']
+    label_names = ['cnv']
     
     run_tumor_normal_classification(cancertype, label_names = label_names, treat_validation_as_test=True, do_not_train=False)
 

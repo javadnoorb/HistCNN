@@ -15,7 +15,7 @@ if [ ! -e 00-app-config.sh ]; then
   echo -e "A template was created for you. Please complete it with your specific app values and try again.\n"
   echo "#!/bin/bash" > 00-app-config.sh
   echo -e "export input_bucket='histology-cnn'  # Bucket name will be used to get the tiles from" >> 00-app-config.sh
-  job_tag="tfrecords_runcnn_her2"
+  job_tag="runcnn_her2"
   echo -e "export task_kind='Task:$job_tag'  # Task type for DataStore" >> 00-app-config.sh
   echo -e "export topic_name='create_$job_tag'  # Topic for Pub/Sub" >> 00-app-config.sh
   echo -e "export subscription_name='create_${job_tag}_sub'  # Subscription for Pub/Sub" >> 00-app-config.sh
