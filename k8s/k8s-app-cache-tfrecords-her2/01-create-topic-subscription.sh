@@ -14,7 +14,7 @@ if [ ! -e 00-app-config.sh ]; then
   echo "#!/bin/bash" > 00-app-config.sh
   echo -e "export caches_input_bucket='histology-tmp'  # Bucket name will be used to get the tiles from" >> 00-app-config.sh
   echo -e "export tfrecords_output_bucket='gs://histology-cnn/tfrecords/her2'  # Bucket name and path to store tfrecords to\n" >> 00-app-config.sh
-  echo -e "export cancertypes=('kirp' 'ucs' 'blca' 'esca' 'luad' 'tgct' 'lusc' 'stad' 'brca' 'coadread' 'lihc')  # Cancer types" >> 00-app-config.sh
+  echo -e "export cancertypes=('kirp' 'ucs' 'blca' 'esca' 'luad' 'tgct' 'lusc' 'stad' 'brca' 'coad' 'read' 'lihc')  # Cancer types" >> 00-app-config.sh
 
   echo -e 'export training_percentage=70' >> 00-app-config.sh
   echo -e 'export testing_percentage=15\n' >> 00-app-config.sh
