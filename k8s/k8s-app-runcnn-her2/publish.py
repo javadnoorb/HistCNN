@@ -9,9 +9,6 @@ from math import ceil
 project_id = os.environ['project_id']
 topic_name = os.environ['topic_name']
 task_kind = os.environ['task_kind']
-# saved_model_path = os.environ['saved_model_path']
-# tfrecpath = os.environ['tfrecpath']
-# image_file_metadata = os.environ['image_file_metadata']
 
 publisher = pubsub.PublisherClient()
 topic_path = publisher.topic_path(project_id, topic_name)
@@ -55,7 +52,8 @@ def delete_task(client, task_id):
     client.delete(key)
 
 
-cancertypes = ['kirp', 'ucs', 'blca', 'esca', 'luad', 'tgct', 'lusc', 'stad', 'brca', 'coadread', 'lihc']
+cancertypes = ['kirp', 'ucs', 'blca', 'esca', 'luad', 'tgct', 'lusc',
+               'stad', 'brca', 'coad', 'read', 'lihc']
 
 n = -1
 for cancertype in tqdm(cancertypes):

@@ -57,11 +57,9 @@ def delete_task(client, task_id):
 
 
 import itertools
-# cancertypes = ['blca', 'esca', 'kich', 'kirp', 'luad', 'ov',
-#                'prad', 'sarc', 'thca', 'ucec','brca', 'coad', 'hnsc',
-#                'kirc', 'lihc', 'lusc', 'paad', 'read', 'stad']
+
 cancertypes = ['kirp', 'ucs', 'blca', 'esca', 'luad', 'tgct',
-               'lusc', 'stad', 'brca', 'coadread', 'lihc']
+               'lusc', 'stad', 'brca', 'coad', 'read', 'lihc']
 
 combos = list(itertools.product(cancertypes, cancertypes))
 
