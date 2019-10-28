@@ -12,16 +12,22 @@ echo -e "sa: $sa"
 echo -e "\nCreating a service account named $sa...\n"
 gcloud iam service-accounts create $sa --display-name "$sa"
 
-echo -e "\nAssigning owner role to the created service account ($sa)...\n"
+echo -e "\nAssigning owner role to the created service account ($sa)..."
 echo -e "\nYou need to have permissions to change iam policies. Ask project owner to assign you the proper role...\n"
-gcloud projects add-iam-policy-binding $project_id --member serviceAccount:$sa@$project_id.iam.gserviceaccount.com --role "roles/owner"
+gcloud projects add-iam-policy-binding $project_id --member serviceAccount:$sa@$project_id.iam.gserviceaccount.com --role "roles/editor"
 
 echo -e "\nCreating the key and storing it as service-key.json...\n"
 gcloud iam service-accounts keys create service-key.json --iam-account $sa@$project_id.iam.gserviceaccount.com
 
+echo -e "\nAuthorizing the service account...\n"
+gcloud auth activate-service-account --key-file service-key.json
+
+echo -e "\nCreating secret key...\n"
+kubectl create secret generic histcnn-secret-key --from-file=key.json=service-key.json
+# rm service-key.json
+
 echo -e "\nCoping service-key.json to ~/.config/ ..."
 cp service-key.json ~/.config/
-
 
 echo -e "\nExporting the path..."
 echo -e "\nFor the future use copy this path to your .bashrc or .bash_profile:"

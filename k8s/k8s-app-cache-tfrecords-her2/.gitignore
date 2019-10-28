@@ -1,0 +1,8 @@
+!data
+data/*
+!data/maffiles
+data/maffiles/*
+!data/maffiles/gdc_manifest_20180212_151718.txt
+!data/README.md
+
+00-app-config.sh

@@ -10,11 +10,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     subparsers = parser.add_subparsers()
-    
+
     #### gcs_parser ####   
     gcs_parser = subparsers.add_parser("gcs", help='GCS-related commands', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     gcs_parser.add_argument('--project', type=str, default=None, required=True, metavar='<value>', help='project id on GC')
+    gcs_parser.add_argument('--payer-project', type=str, default=None, metavar='<value>', help='project id to use for payment. If nothing is provided, the GCS project id will be used.')
     gcs_parser.add_argument("--checkpath", type=str, metavar='<path>', 
                             help="Check if path exists on gcs. status:0 -> file exists; status:1 -> file does not exist")
     gcs_parser.add_argument("--download_dir", type=str, default=None, metavar='<path>',
@@ -35,6 +36,8 @@ if __name__ == "__main__":
     ann_parser.add_argument("--tissue", default=None, type=str, metavar="<value>",
             help="If provided subtype annotation based on tissue type provided will be included into the final annotation file")
     ann_parser.add_argument("--drop-normals", action="store_true", help='remove normal samples before assigning cross-validation groups')
+    ann_parser.add_argument("--her2-amplification", action="store_true", help='include HER2 amplifications for each sample')
+    
     ann_parser.set_defaults(func=annotate_inputs)    
 
     ### run_subtype_parser

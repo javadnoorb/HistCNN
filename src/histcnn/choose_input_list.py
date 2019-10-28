@@ -39,8 +39,21 @@ def annotate_subtypes(cache_df, tissue,
     if verbose:
         print('Shuffling rows of the resulting dataframe')
     output = output.sample(frac=1).reset_index(drop=True)
-    
+
     return output
+
+def get_her2_metadata():
+    her2cna_files = os.path.join(DATA_PATH, 'her2-cna.txt')
+    her2cnas = pd.read_csv(her2cna_files, sep='\t')
+    her2cnas = her2cnas[her2cnas['SAMPLE_ID'].map(lambda x: x[-2:]) == '01']
+    her2cnas['SAMPLE_ID'] = her2cnas['SAMPLE_ID'].map(lambda x: x[:-3])
+    her2cnas.rename(columns = {'SAMPLE_ID': 'patient_id', 'ERBB2': 'cnv'}, inplace=True)
+    # her2cnas['cancertype'] = her2cnas['STUDY_ID'].map(lambda x: x.split('_')[0])
+    her2cnas = her2cnas[['patient_id',	'cnv']]
+    her2cnas.reset_index(drop=True, inplace=True)
+    her2cnas['cnv'] = (her2cnas['cnv']>0).astype(int)
+    
+    return her2cnas
 
 def load_histotype_guide(
     histotypes_counts_file = DATA_PATH+'/histotypes_counts_annotated.xlsx',
@@ -251,10 +264,13 @@ def get_blob_val(blobname, bucket, apply_func = lambda x: x.tostring()):
 
 def load_cache_values(image_files_metadata, notebook = True, tqdm_desc = '',
                       project='jax-nihcc-res-00-0011', bucket_name = None,
-                      apply_func = lambda x: x.tostring()):
+                      apply_func = lambda x: x.tostring(), user_project=None):
     assert bucket_name is not None, 'please provide bucket name'
     client = storage.Client(project=project)
-    bucket = client.get_bucket(bucket_name)
+    
+    if user_project==None:
+        user_project=project
+    bucket = client.bucket(bucket_name, user_project=user_project)
     
     if notebook:
         tqdm_notebook.pandas(desc=tqdm_desc)

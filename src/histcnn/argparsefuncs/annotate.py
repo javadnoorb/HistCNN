@@ -28,5 +28,13 @@ def annotate_inputs(args):
         print('Saving tile dataframe to disk...')
         cache_df.to_csv(output_file, index=False)
         print('Saved to: {:s}'.format(output_file))
+    
+    if args.her2_amplification:
+        print('Annotating...')
+        her2cnas = choose_input_list.get_her2_metadata()
+        cache_df = cache_df.merge(her2cnas, on='patient_id')
+        cache_df = cache_df.sample(frac=1, random_state=0).reset_index(drop=True)
+        cache_df.to_csv(output_file, index=False)
+        print('Saved to: {:s}'.format(output_file))
 
 

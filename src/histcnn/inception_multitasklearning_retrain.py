@@ -335,7 +335,7 @@ def add_final_training_ops(learning_rate, task_class_counts, bottleneck_input,
                     raise
                 tf.summary.histogram('shared_layer_output', shared_layer_output)
             with tf.name_scope('dropout'):
-                shared_layer_output_dropout = tf.nn.dropout(shared_layer_output, dropout_keep_prob,
+                shared_layer_output_dropout = tf.nn.dropout(shared_layer_output, rate=1-dropout_keep_prob,
                                                             name='SharedLayerOutputDroppedout')
 
         final_softmax_outputs_list = [None]*num_tasks
