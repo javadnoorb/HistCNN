@@ -63,7 +63,8 @@ def mark_in_progress(client, task_id):
         task['status'] = 'InProgress'
         client.put(task)
 
-def cross_classify(cancertype1, cancertype2, include_training_set=True, train_test_percentage = [70, 30]):
+def cross_classify(cancertype1, cancertype2, include_training_set=True, train_test_percentage = [70, 30], 
+                   label_terms=['normal', 'tumor'], labal_names = ['cnv'], nClass = 2):
     if cancertype1 == cancertype2:
         include_training_set = False
     print('cross classify {:s} and {:s} ...'.format(cancertype1, cancertype2))
@@ -83,7 +84,7 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
 
     image_files_metadata = pd.read_csv(image_file_metadata_filename, sep=',')
     image_files_metadata.rename(columns={'cnv':'label'}, inplace=True)
-    image_files_metadata['label_name'] = image_files_metadata['label'].map(lambda x: ['normal', 'tumor'][x])
+    image_files_metadata['label_name'] = image_files_metadata['label'].map(lambda x: label_terms[x])
 
     tfrecordfileslist = glob.glob(tfrecpath+'*.testing') + glob.glob(tfrecpath+'*.validation')
     if include_training_set:
@@ -94,8 +95,8 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
 #     test_batch_size = run_classification.get_total_tfrec_count(tfrecordfileslist)
     test_batch_size = len(image_files_metadata)
 
-    labal_names = ['cnv']
-    nClass = 2
+    
+    
     print('running the CNN')
 
     test_accuracies_list, predictions_list, confusion_matrices_list, imagefilenames, final_softmax_outputs_list = \
@@ -126,7 +127,8 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
                 open('/sdata/' + pickle_path, 'wb'))
 
     util.gsutil_cp(os.path.join('/sdata', pickle_path), os.path.join('gs://'+input_bucket, pickle_path), payer_project_id=payer_project_id)
-    
+
+
 def worker(msg):
     start_time = time.time()
     print(msg.message.data)
@@ -142,7 +144,7 @@ def worker(msg):
     cancertype1 = params['cancertype1']
     cancertype2 = params['cancertype2']
 	
-    cross_classify(cancertype1, cancertype2)
+    cross_classify(cancertype1, cancertype2, label_terms=['not amplified', 'amplified'])
 
     elapsed_time_s = round((time.time() - start_time), 1)  # in seconds
     completed_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())

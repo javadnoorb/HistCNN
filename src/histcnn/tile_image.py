@@ -57,7 +57,7 @@ def TileSVS(svsFile, outdir, SaveToFile = True, tile_size=512, downsample = 1,
             else:
                 tile = np.array(tile)
                 X[m,n,:tile.shape[0],:tile.shape[1],:] = tile
-                
+
     Slide.close()
     return X
 

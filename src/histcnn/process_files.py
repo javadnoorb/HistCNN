@@ -6,6 +6,8 @@ from histcnn import (tile_image,
                  util)
 import openslide as ops
 
+DATA_PATH = pkg_resources.resource_filename('histcnn', 'data/')
+
 def mkdir_if_not_exist(inputdir):
     if not os.path.exists(inputdir):
         os.makedirs(inputdir)
