@@ -10,7 +10,7 @@ def mkdir_if_not_exist(inputdir):
     return inputdir
 
 
-def TileSVS(svsFile, outdir, SaveToFile = True, tile_size=512, downsample = 1,
+def TileSVS(svsFile, outdir=None, SaveToFile = True, tile_size=512, downsample = 1,
             bg_th = 220, max_bg_frac = 0.5, ProgressBarObj=None, **kwargs):    
     '''
     bg_th : intensities above this will be treated as background
@@ -29,7 +29,7 @@ def TileSVS(svsFile, outdir, SaveToFile = True, tile_size=512, downsample = 1,
     if SaveToFile:
         X = None
     else:
-        X = np.zeros((Xdims[0], Xdims[1], tile_side, tile_side, 3), dtype='uint8')
+        X = np.zeros((Xdims[0], Xdims[1], tile_size, tile_size, 3), dtype='uint8')
 
 
     num_tiles = np.prod(Xdims)

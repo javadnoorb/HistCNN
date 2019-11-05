@@ -5,8 +5,16 @@ from histcnn import (tile_image,
                  preprocess_image,
                  util)
 import openslide as ops
+import pandas as pd
+import pkg_resources
 
 DATA_PATH = pkg_resources.resource_filename('histcnn', 'data/')
+
+def get_updated_gcsurls():
+    bigquery_command = 'SELECT file_gcs_url, slide_barcode FROM `isb-cgc.metadata.TCGA_slide_images`'
+    updated_gcsurls = pd.read_gbq(bigquery_command)
+    updated_gcsurls_filename = os.path.join(DATA_PATH, 'TCGA_slide_images_updated_gcsurls.txt')
+    updated_gcsurls.to_csv(updated_gcsurls_filename, index=False)
 
 def mkdir_if_not_exist(inputdir):
     if not os.path.exists(inputdir):
