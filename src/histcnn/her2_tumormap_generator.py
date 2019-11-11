@@ -8,9 +8,54 @@ import pkg_resources
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.backends.backend_pdf
+from PIL import Image
 
 DATA_PATH = pkg_resources.resource_filename('histcnn', 'data/')
 
+
+def save_overlaid_tumormap(slide_id, svs_download_dir, 
+                           cancertype1, cancertype2, 
+                           votes, predictions_df,
+                           L=10000, figsize=(15, 15),
+                           single_output=True, 
+                           tile_size = 512):
+    
+    metadata = pd.read_csv(os.path.join(DATA_PATH, 'TCGA_slide_images_metadata.txt'))
+    AppMag = metadata[metadata['slide_barcode'] == slide_id]['AppMag'].iloc[0]
+
+    
+    svsFile = download_slide(slide_id, svs_download_dir, force_download=False)
+    slide = ops.OpenSlide(svsFile)
+
+    figtitle, outputfile = get_figtitle(cancertype1, cancertype2, votes, predictions_df, slide_id)
+
+    tumormap = get_tumormap(predictions_df, slide, slide_id, 
+                            downsample = AppMag, 
+                            tile_size = tile_size)
+    thumb = get_thumbnail(slide, L=L, show_figure=False)
+    
+    if not single_output:
+        pdf = matplotlib.backends.backend_pdf.PdfPages(outputfile)
+    thumb_pil = overlay_maps(thumb, slide, tumormap, figsize=figsize, plot_output=single_output)
+    
+    if single_output:
+        thumb_pil.save(outputfile.rstrip('pdf')+'png')
+    else:
+        plt.figure(figsize=figsize)
+        plt.imshow(thumb_pil)
+        plt.title(figtitle, fontsize=14, fontweight='bold')
+        plt.axis('off');
+        
+        pdf.savefig(bbox_inches='tight')
+        plt.figure(figsize=figsize)
+        plt.imshow(thumb)
+        plt.axis('off');
+        pdf.savefig(bbox_inches='tight')
+
+        pdf.close()
+        
+            
 def get_best_slides(votes, predictions_df, number_of_slides = 5):
     slides_list_no_amp = votes[votes['label'] == 0]['label_pred'].sort_values(ascending=True).index[:number_of_slides].tolist()
     slides_list_with_amp = votes[votes['label'] == 1]['label_pred'].sort_values(ascending=False).index[:number_of_slides].tolist()
@@ -66,18 +111,26 @@ def resize_tumormap(tumormap, scale=1):
     tumormap_resized = sktr.rescale(tumormap, scale, anti_aliasing=False, order=0, preserve_range=True, multichannel=True)
     return tumormap_resized.astype('uint8')
 
-def overlay_maps(thumb, slide, tumormap, downsample=2, tile_size=512):
+def overlay_maps(thumb, slide, tumormap, downsample=2, tile_size=512, alpha=0.5, figsize=(15, 15), plot_output=True):
     L = downsample*tile_size
     Xdims = np.floor((np.array(slide.dimensions)-1)/L).astype(int)
     floorcorrection = (np.array(slide.dimensions) / (Xdims*L))[::-1]
 
     size_ratio = np.array(thumb.shape[:2])/np.array(tumormap.shape[:2])
     tumormap_resized = resize_tumormap(tumormap, scale=size_ratio/floorcorrection)
+    
+    if plot_output:
+        fig, ax = plt.subplots(figsize=figsize)
 
-    fig, ax = plt.subplots(figsize=(15, 15))
-
-    ax.imshow(thumb)
-    ax.imshow(tumormap_resized, alpha=0.2)
+    thumb_pil = Image.fromarray(thumb)
+#     thumb_pil.putalpha(255)
+    tumormap_resized = Image.fromarray(tumormap_resized)
+    tumormap_resized.putalpha(int(255*alpha))
+    thumb_pil.paste(tumormap_resized, (0,0), mask=tumormap_resized)
+    
+    if plot_output:
+        plt.imshow(thumb_pil)
+    return thumb_pil
 
 def convert_tumormap_to_rgb(a, cmap = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], immax=255):
     img = np.stack([a]*3, axis=2).astype(int)
@@ -99,12 +152,12 @@ def get_tumormap(predictions_df, slide, slide_id, downsample = 2,
         tumormap = convert_tumormap_to_rgb(tumormap, cmap=cmap, immax=immax)
     return tumormap
 
-def get_thumbnail(slide, L = 1000, show_figure=True):
+def get_thumbnail(slide, L = 1000, show_figure=True, figsize=(15, 15)):
     th = slide.get_thumbnail((L, L))
     thumb = np.asarray(th)
     
     if show_figure:
-        plt.figure(figsize=(15, 15))
+        plt.figure(figsize=figsize)
         plt.imshow(thumb)
     return thumb
 
@@ -125,5 +178,7 @@ def get_figtitle(cancertype1, cancertype2, votes, predictions_df, slide_id,
 
     figtitle = '{:s}\nground truth: {:s}\ntrained on: {:s}\ntested on: {:s}\npredicted frequency: {:.2f}'.format(
         slide_id, label, cancertype1.upper(), cancertype2.upper(), freq)
+    outputfile = 'her2-tumormaps_overlayed/{:s}-{:s}-{:s}-freq{:.2f}-{:s}.tumormap.pdf'.format(
+            cancertype1, cancertype2, label.replace(' ', '_'), freq, slide_id)
     
-    return figtitle
+    return figtitle, outputfile
