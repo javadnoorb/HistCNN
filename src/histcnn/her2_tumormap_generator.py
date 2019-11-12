@@ -10,9 +10,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.backends.backend_pdf
 from PIL import Image
+from tqdm import tqdm
 
 DATA_PATH = pkg_resources.resource_filename('histcnn', 'data/')
 
+def save_all_overlaid_tumormaps(cancertype1, cancertype2, 
+                                picklefile, svs_download_dir,
+                                L=30000, figsize=(15, 15), 
+                                single_output=True, 
+                                number_of_slides = 5, 
+                                downsample = 2, tile_size = 512):
+
+    votes, predictions_df = get_predictions_df(cancertype1, cancertype2, picklefile)
+    slides = get_best_slides(votes, predictions_df, number_of_slides = number_of_slides)
+
+    for slide_id in tqdm(slides):
+        try:
+            save_overlaid_tumormap(slide_id, svs_download_dir, 
+                                       cancertype1, cancertype2, 
+                                       votes, predictions_df,
+                                       L=L, figsize=figsize, 
+                                       single_output=single_output)
+        except Exception as exc:
+            print(slide_id)
+#             print(traceback.format_exc())
+            print(exc)
+            
+        plt.close('all')
 
 def save_overlaid_tumormap(slide_id, svs_download_dir, 
                            cancertype1, cancertype2, 
