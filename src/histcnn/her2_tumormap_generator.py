@@ -43,7 +43,7 @@ def save_overlaid_tumormap(slide_id, svs_download_dir,
                            votes, predictions_df,
                            L=10000, figsize=(15, 15),
                            single_output=True, 
-                           tile_size = 512):
+                           tile_size = 512, binary=True):
     
     metadata = pd.read_csv(os.path.join(DATA_PATH, 'TCGA_slide_images_metadata.txt'))
     AppMag = metadata[metadata['slide_barcode'] == slide_id]['AppMag'].iloc[0]
@@ -56,7 +56,7 @@ def save_overlaid_tumormap(slide_id, svs_download_dir,
 
     tumormap = get_tumormap(predictions_df, slide, slide_id, 
                             downsample = AppMag, 
-                            tile_size = tile_size)
+                            tile_size = tile_size, binary=binary)
     thumb = get_thumbnail(slide, L=L, show_figure=False)
     
     if not single_output:
@@ -94,11 +94,12 @@ def get_predictions_df(cancertype1, cancertype2, picklefile):
 
     label_names = ['label']
     votes, predictions_df = plotting_cnn.get_per_slide_average_predictions(
-        image_files_metadata, imagefilenames, predictions_list, label_names)
+        image_files_metadata, imagefilenames, predictions_list, label_names, 
+        final_softmax_outputs_list=final_softmax_outputs_list)
 
     predictions_df.rename(columns={'rel_path': 'image_filename'}, inplace=True)
     predictions_df['image_filename'] = predictions_df['image_filename'].str.rstrip('_cached.txt')
-    
+
     return votes, predictions_df
 
 def pad_index_col_with_zeros(input_df):
@@ -120,22 +121,29 @@ def pad_tumormap_rightdown(tumormap, slide, downsample = 2, tile_size = 512):
     tumormap_padded = np.pad(tumormap, ((0, Xdims[1]- tumormap.shape[0]), (0, Xdims[0]- tumormap.shape[1])))
     return tumormap_padded
 
-def get_tumor_map_cropped(predictions_df, slide_id):
+def get_tumor_map_cropped(predictions_df, slide_id, binary=True):
     label = 'label'
     tmp = predictions_df[predictions_df['sample_id'] == slide_id].copy()
     pattern = re.compile('(\d+)_(\d+)\.jpg$')
     tmp['re_groups'] = tmp['image_filename'].map(lambda x: re.search(pattern, x))
     tmp['coord_x'] = tmp['re_groups'].map(lambda x: int(x.group(1)))
     tmp['coord_y'] = tmp['re_groups'].map(lambda x: int(x.group(2)))
-    tmp = pd.pivot(tmp, index='coord_x', columns='coord_y', values=label+'_pred')
-    tmp = (tmp + 1).fillna(0).astype(int)
+    if binary:
+        tmp = pd.pivot(tmp, index='coord_x', columns='coord_y', values=label+'_pred')
+        tmp = (tmp + 1).fillna(0).astype(int)
+    else:
+        tmp['pred_probs'] = tmp['pred_probs'].map(lambda x: x[1])
+        tmp = pd.pivot(tmp, index='coord_x', columns='coord_y', values='pred_probs')  
+        tmp = (tmp + 1).fillna(0)
     return tmp
 
 def resize_tumormap(tumormap, scale=1):
     tumormap_resized = sktr.rescale(tumormap, scale, anti_aliasing=False, order=0, preserve_range=True, multichannel=True)
     return tumormap_resized.astype('uint8')
 
-def overlay_maps(thumb, slide, tumormap, downsample=2, tile_size=512, alpha=0.5, figsize=(15, 15), plot_output=True):
+def overlay_maps(thumb, slide, tumormap, 
+                 downsample=2, tile_size=512, 
+                 alpha=0.5, figsize=(15, 15), plot_output=True):
     L = downsample*tile_size
     Xdims = np.floor((np.array(slide.dimensions)-1)/L).astype(int)
     floorcorrection = (np.array(slide.dimensions) / (Xdims*L))[::-1]
@@ -156,24 +164,35 @@ def overlay_maps(thumb, slide, tumormap, downsample=2, tile_size=512, alpha=0.5,
         plt.imshow(thumb_pil)
     return thumb_pil
 
-def convert_tumormap_to_rgb(a, cmap = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], immax=255):
-    img = np.stack([a]*3, axis=2).astype(int)
-    
-    rgb = 0
-    for n in range(3):
-        rgb+=np.multiply((img == n), cmap[n])
-    return rgb * immax
+def convert_tumormap_to_rgb(a, cmap = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], immax=255, 
+                            binary=True, prob_map_cmap=[0.0, 1.0, 0.0]):
+    if binary:
+        img = np.stack([a]*3, axis=2).astype(int)
+        rgb = 0
+        for n in range(3):
+            rgb+=np.multiply((img == n), cmap[n])
+        return rgb * immax
+    else:
+        assert sum(prob_map_cmap) == 1
+        rgb = a - 1
+        rgb = np.stack([rgb*prob_map_cmap[0], rgb*prob_map_cmap[1], rgb*prob_map_cmap[2]], axis=2)#.astype(int)
+        rgb[a == 0] = 1.0
+        return (rgb * immax).astype(int)
 
 def get_tumormap(predictions_df, slide, slide_id, downsample = 2, 
                  tile_size = 512, convert_to_rgb = True,
                  cmap = [[1, 1, 1], [0, 0, 0], [0, 1, 0]],
-                 immax=255):
-    tumormap = get_tumor_map_cropped(predictions_df, slide_id)
+                 immax=255, binary=True, prob_map_cmap=[0.0, 1.0, 0.0]):
+
+    tumormap = get_tumor_map_cropped(predictions_df, slide_id, binary=binary)
     tumormap = pad_with_zeros(tumormap)
     tumormap = tumormap.T.values
     tumormap = pad_tumormap_rightdown(tumormap, slide, downsample = 2, tile_size = 512)
     if convert_to_rgb:
-        tumormap = convert_tumormap_to_rgb(tumormap, cmap=cmap, immax=immax)
+        tumormap = convert_tumormap_to_rgb(tumormap, cmap=cmap, 
+                                           immax=immax, binary=binary, 
+                                           prob_map_cmap=prob_map_cmap)
+#         tumormap[np.isnan(tumormap)] = immax
     return tumormap
 
 def get_thumbnail(slide, L = 1000, show_figure=True, figsize=(15, 15)):

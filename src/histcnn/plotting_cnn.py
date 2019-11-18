@@ -188,10 +188,18 @@ def plot_all_evaluations(confusion_matrices_list,label_names, vertical=True):
     else:
         plot_classification_evaluation_measures(confusion_matrices_list, label_names)
 
-def get_per_slide_average_predictions(image_files_metadata, imagefilenames, predictions_list, label_names):
+def get_per_slide_average_predictions(image_files_metadata, imagefilenames, 
+                                      predictions_list, label_names, final_softmax_outputs_list=None):
     assert len(label_names) == len(predictions_list)
     label_names_pred = [s+"_pred" for s in label_names]
-    predictions_df = pd.DataFrame([imagefilenames] + predictions_list, index=['rel_path']+label_names_pred).T
+    
+    if final_softmax_outputs_list == None:
+        predictions_df = pd.DataFrame([imagefilenames] + predictions_list,
+                                  index=['rel_path']+label_names_pred).T
+    else:
+        predictions_df = pd.DataFrame([imagefilenames] + predictions_list + final_softmax_outputs_list,
+                                  index=['rel_path']+label_names_pred+['pred_probs']).T
+            
     predictions_df['rel_path'] = predictions_df['rel_path'].map(lambda x: x.decode())
     predictions_df[label_names_pred] = predictions_df[label_names_pred].astype(int)
     predictions_df = image_files_metadata.merge(predictions_df, how = 'right', on='rel_path')
