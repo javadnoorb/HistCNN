@@ -20,7 +20,8 @@ echo -e "project_id: $project_id"
 echo -e "payer_project_id: $payer_project_id" 
 echo -e "zone_name: $zone_name"
 echo -e "cluster_name: $cluster_name"
-echo -e "bucket_name: $bucket_name"
+echo -e "input_bucket_name: $input_bucket_name"
+echo -e "output_bucket_name: $output_bucket_name"
 echo -e "tiles_input_path: $tiles_input_path"
 echo -e "topic_name: $topic_name"
 echo -e "subscription_name: $subscription_name"
@@ -50,7 +51,7 @@ echo '' > /tmp/svs_path_list.txt
 for cancertype in "${cancertypes[@]}"
 do
   echo -e "\nFetching list of svs files for $cancertype and saving it to: /tmp/svs_path_list.txt"
-  gsutil -u $payer_project_id -m ls gs://$bucket_name/$tiles_input_path/$cancertype/${cancertype}_512x512/ >> /tmp/svs_path_list.txt
+  gsutil -u $payer_project_id -m ls gs://$input_bucket_name/$tiles_input_path/$cancertype/${cancertype}_512x512/ >> /tmp/svs_path_list.txt
 done
 
 # Publishing messages

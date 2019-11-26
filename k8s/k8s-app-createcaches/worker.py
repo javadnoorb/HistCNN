@@ -18,7 +18,8 @@ import glob
 
 project_id = PROJECT_ID
 subscription_name = SUBSCRIPTION_NAME
-bucket_name = BUCKET_NAME
+input_bucket_name = INPUT_BUCKET_NAME
+output_bucket_name = OUTPUT_BUCKET_NAME
 task_kind = TASK_KIND
 
 subscriber = pubsub.SubscriberClient()
@@ -41,7 +42,8 @@ def mark_done(client, task_id, completed_time, elapsed_time_s):
         task['status'] = 'Done'
         task['completed_time'] = completed_time
         task['elapsed_time_s'] = elapsed_time_s
-        task['bucket_name'] = bucket_name
+        task['input_bucket_name'] = input_bucket_name
+        task['output_bucket_name'] = output_bucket_name
         client.put(task)
 
 def mark_in_progress(client, task_id):
@@ -69,16 +71,17 @@ def worker(msg):
     mark_in_progress(client, task_id)
     svs_path = params['svs_path']
 
-    bucket_name = svs_path.lstrip('gs://').split('/')[0]
-    bucket_path = 'gs://' + bucket_name
+#    input_bucket_name = svs_path.lstrip('gs://').split('/')[0]
+    input_bucket_path = 'gs://' + input_bucket_name
+    output_bucket_path = 'gs://' + output_bucket_name
     input_tiles_path = os.path.join(svs_path, 'tiles/tile_*.jpg')
-    local_tiles_path = os.path.join(re.sub(bucket_path, '/sdata', svs_path), 'tiles/')
+    local_tiles_path = os.path.join(re.sub(input_bucket_path, '/sdata', svs_path), 'tiles/')
     local_tiles_glob_path = os.path.join(local_tiles_path, 'tile_*.jpg')
 #     output_cache_path = re.sub('/tiles_', '/caches_', svs_path)
     x = local_tiles_path.rstrip('/').split('/'); x.pop(-1); x[-2]+='_cache'
     local_cache_path = '/'.join(x)
 #     local_cache_path = re.sub(bucket_path, '/sdata', output_cache_path)
-    output_cache_path = re.sub('/sdata', bucket_path, local_cache_path)
+    output_cache_path = re.sub('/sdata', output_bucket_path, local_cache_path)
     
     print('copying files from GCS')
     util.gsutil_cp(input_tiles_path, local_tiles_path, make_dir=True)    

@@ -12,7 +12,8 @@ if [ ! -e 00-app-config.sh ]; then
   echo -e "\nError: 00-app-config.sh not found!"
   echo -e "A template was created for you. Please complete it with your specific app values and try again.\n"
   echo "#!/bin/bash" > 00-app-config.sh
-  echo -e "export bucket_name='YOUR-BUCKET-NAME'  # Bucket to store the tiles\n" >> 00-app-config.sh
+  echo -e "export input_bucket_name='YOUR-BUCKET-NAME'  # Bucket to store the tiles\n" >> 00-app-config.sh
+  echo -e "export output_bucket_name=\$input_bucket_name  # Bucket to store the tiles\n" >> 00-app-config.sh
 
   echo -e "export cancertypes=('acc' 'blca' 'brca' 'cesc' 'chol' 'coad' 'dlbc' 'esca' 'gbm' 'hnsc' 'kich' 'kirc' 'kirp' 'lgg' 'lihc' 'luad' 'lusc' 'meso' 'ov' 'paad' 'pcpg' 'prad' 'read' 'sarc' 'skcm' 'stad' 'tgct' 'thca' 'thym' 'ucec' 'ucs' 'uvm')  # Cancer types" >> 00-app-config.sh  
   echo -e "export task_kind='Task:caching'  # Task type for DataStore" >> 00-app-config.sh

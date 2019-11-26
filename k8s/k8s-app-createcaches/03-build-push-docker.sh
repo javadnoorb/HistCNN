@@ -26,7 +26,8 @@ cp worker.py  dockercontext/dock_worker.py
 sed -i -e 's/PROJECT_ID/"'$project_id'"/g' dockercontext/dock_worker.py
 sed -i -e 's/PAYER_PROJECTID/"'$payer_project_id'"/g' dockercontext/dock_worker.py
 sed -i -e 's/SUBSCRIPTION_NAME/"'$subscription_name'"/g' dockercontext/dock_worker.py
-sed -i -e 's/BUCKET_NAME/"'$bucket_name'"/g' dockercontext/dock_worker.py
+sed -i -e 's/INPUT_BUCKET_NAME/"'$input_bucket_name'"/g' dockercontext/dock_worker.py
+sed -i -e 's/OUTPUT_BUCKET_NAME/"'$output_bucket_name'"/g' dockercontext/dock_worker.py
 sed -i -e 's/TASK_KIND/"'$task_kind'"/g' dockercontext/dock_worker.py
 
 docker build -t gcr.io/$project_id/${image_name}:v1 ./dockercontext/

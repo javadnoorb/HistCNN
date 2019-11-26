@@ -29,7 +29,8 @@ def add_task(client, n, svs_path):
         'task_number': n,
         'status': 'Queued',
         'created': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-        'bucket_name': None,
+        'input_bucket_name': None,
+        'output_bucket_name': None,
         'completed_time' : None,
         'elapsed_time_s' : None,
         'number_of_tiles' : None, # count_local_tiles
