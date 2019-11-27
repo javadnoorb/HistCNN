@@ -17,6 +17,7 @@ import re
 import glob
 
 project_id = PROJECT_ID
+payer_project_id = PAYER_PROJECTID
 subscription_name = SUBSCRIPTION_NAME
 input_bucket_name = INPUT_BUCKET_NAME
 output_bucket_name = OUTPUT_BUCKET_NAME
@@ -84,7 +85,7 @@ def worker(msg):
     output_cache_path = re.sub('/sdata', output_bucket_path, local_cache_path)
     
     print('copying files from GCS')
-    util.gsutil_cp(input_tiles_path, local_tiles_path, make_dir=True)    
+    util.gsutil_cp(input_tiles_path, local_tiles_path, make_dir=True, payer_project_id=payer_project_id)    
 
     caches_metadata = pd.DataFrame(glob.glob(local_tiles_glob_path), columns=['image_filename'])
     def convert_to_cache_path(x, local_cache_path):
@@ -100,7 +101,7 @@ def worker(msg):
     print('Finished caching {:s}'.format(svs_path))    
 
     print('Copying files from disk to gcs...')
-    util.gsutil_cp(os.path.join(local_cache_path, '*'), output_cache_path)
+    util.gsutil_cp(os.path.join(local_cache_path, '*'), output_cache_path, payer_project_id=payer_project_id)
 
     # Calculate elapsed time
     elapsed_time_s = round((time.time() - start_time), 1)  # in seconds
