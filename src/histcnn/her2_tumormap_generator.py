@@ -19,7 +19,7 @@ def save_all_overlaid_tumormaps(cancertype1, cancertype2,
                                 L=30000, figsize=(15, 15), 
                                 single_output=True, 
                                 number_of_slides = 5, 
-                                downsample = 2, tile_size = 512, wsi=True):
+                                downsample = 2, tile_size = 512, wsi=False):
 
     votes, predictions_df = get_predictions_df(cancertype1, cancertype2, picklefile)
     slides = get_best_slides(votes, predictions_df, number_of_slides = number_of_slides)
@@ -43,7 +43,7 @@ def save_overlaid_tumormap(slide_id, svs_download_dir,
                            votes, predictions_df,
                            L=10000, figsize=(15, 15),
                            single_output=True, 
-                           tile_size = 512, binary=True, wsi=True):
+                           tile_size = 512, binary=True, wsi=False):
     
     metadata = pd.read_csv(os.path.join(DATA_PATH, 'TCGA_slide_images_metadata.txt'))
     AppMag = metadata[metadata['slide_barcode'] == slide_id]['AppMag'].iloc[0]
