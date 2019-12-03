@@ -19,7 +19,7 @@ def save_all_overlaid_tumormaps(cancertype1, cancertype2,
                                 L=30000, figsize=(15, 15), 
                                 single_output=True, 
                                 number_of_slides = 5, 
-                                downsample = 2, tile_size = 512, wsi=True):
+                                downsample = 2, tile_size = 512, wsi=False):
 
     votes, predictions_df = get_predictions_df(cancertype1, cancertype2, picklefile)
     slides = get_best_slides(votes, predictions_df, number_of_slides = number_of_slides)
@@ -43,7 +43,7 @@ def save_overlaid_tumormap(slide_id, svs_download_dir,
                            votes, predictions_df,
                            L=10000, figsize=(15, 15),
                            single_output=True, 
-                           tile_size = 512, binary=True, wsi=True):
+                           tile_size = 512, binary=True, wsi=False):
     
     metadata = pd.read_csv(os.path.join(DATA_PATH, 'TCGA_slide_images_metadata.txt'))
     AppMag = metadata[metadata['slide_barcode'] == slide_id]['AppMag'].iloc[0]
@@ -170,7 +170,7 @@ def overlay_maps(thumb, slide, tumormap,
     return thumb_pil
 
 def convert_tumormap_to_rgb(a, cmap = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], immax=255, 
-                            binary=True, prob_map_cmap=[0.0, 1.0, 0.0]):
+                            binary=True, prob_map_cmap=[0.0, 1.0, 0.0], redblue=True):
     if binary:
         img = np.stack([a]*3, axis=2).astype(int)
         rgb = 0
@@ -180,7 +180,11 @@ def convert_tumormap_to_rgb(a, cmap = [[1, 0, 0], [0, 1, 0], [0, 0, 1]], immax=2
     else:
         assert sum(prob_map_cmap) == 1
         rgb = a - 1
-        rgb = np.stack([rgb*prob_map_cmap[0], rgb*prob_map_cmap[1], rgb*prob_map_cmap[2]], axis=2)#.astype(int)
+        
+        if redblue:
+            rgb = np.stack([rgb*(rgb>0.5), rgb*0, rgb*(rgb<=0.5)], axis=2)
+        else:
+            rgb = np.stack([rgb*prob_map_cmap[0], rgb*prob_map_cmap[1], rgb*prob_map_cmap[2]], axis=2)#.astype(int)
         rgb[a == 0] = 1.0
         return (rgb * immax).astype(int)
 
