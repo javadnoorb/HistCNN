@@ -234,7 +234,7 @@ def get_per_slide_evaluation_metrics_for_many_thresholds_for_all_labels(
     ):
  
     per_slide_evaluation_metrics_df = []
-    for label in tqdmn(label_names):
+    for label in tqdm(label_names):
         per_slide_evaluation_metrics = get_per_slide_evaluation_metrics_for_many_thresholds(
             per_slide_average_predictions[[label, label+'_pred']], label,
             per_slide_average_thresholds = per_slide_average_thresholds)
