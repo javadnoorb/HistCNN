@@ -90,9 +90,11 @@ def plot_crossclassification_heatmap(picklefile):
     legend_colors = pd.Series(colors_dict)
     # legend_colors = pd.concat([legend_colors, pd.Series(colors_dict)])
     # legend_colors.drop_duplicates(inplace=True, keep='last')
+    # adenocarcinomas = ['LUAD', 'PAAD', 'COAD', 'PRAD', 'STAD', 'OV', 'READ', 'LIHC']
+    # carcinomas = ['BLCA', 'THCA', 'KIRP', 'KICH', 'UCEC', 'LUSC', 'HNSC', 'BRCA', 'KIRC']
 
-    adenocarcinomas = ['LUAD', 'PAAD', 'COAD', 'PRAD', 'STAD', 'OV', 'READ', 'LIHC']
-    carcinomas = ['BLCA', 'THCA', 'BRCA', 'KIRC', 'KIRP', 'KICH', 'UCEC', 'LUSC', 'HNSC']
+    adenocarcinomas = ['LUAD', 'PAAD', 'COAD', 'PRAD', 'STAD', 'OV', 'READ', 'LIHC', 'BRCA', 'KIRC']
+    carcinomas = ['BLCA', 'THCA', 'KIRP', 'KICH', 'UCEC', 'LUSC', 'HNSC']
     other = ['ESCA', 'SARC']
     samplecolors.loc[adenocarcinomas, 'adeno.'] = colors_dict['Adenocarcinoma']
     samplecolors.loc[carcinomas, 'adeno.'] = colors_dict['Carcinoma (non-adeno)']
@@ -113,8 +115,48 @@ def plot_crossclassification_heatmap(picklefile):
                   bbox_to_anchor=(20, 1.1))
         return (Zrow, Zcol)
 
+    from scipy.cluster.hierarchy import dendrogram
+    import libpysal
+    from esda.gamma import Gamma
+        
+    def get_gamma_index_p_value(feature, linkage_matrix, samplecolors, cancertypes, colors_dict, drop_Other=True):
+        '''
+        This function calculates gamma index of spatial autocorrelation for tissue feature labels
+        For further information refer to: 
+        Hubert, Lawrence James, Reg G. Golledge, and Carmen M. Costanzo. 
+        "Generalized procedures for evaluating spatial autocorrelation."
+        Geographical Analysis 13.3 (1981): 224-233.
+        '''
+        cluster_ordering = dendrogram(linkage_matrix, no_plot=True)['ivl']
+        cluster_ordering = [cancertypes[int(idx)].upper() for idx in cluster_ordering]
+
+        colors_dict_revert = {v:k for k,v in colors_dict.items()}
+        tmp = samplecolors[feature].map(lambda x: colors_dict_revert[x])
+
+        tmp = tmp.loc[cluster_ordering]
+        if drop_Other:
+            tmp = tmp[tmp != 'Other']
+        tmp = tmp.astype('category').cat.codes
+
+        w = libpysal.weights.lat2W(1,len(tmp))
+        g = Gamma(tmp.values, w, operation = lambda y,i,j: y[i]==y[j])
+        p_value = g.p_sim_g
+        return p_value
+
+    def get_all_gamma_index_p_values(Zrow, Zcol, samplecolors, cancertypes, colors_dict, drop_Other=True):
+        p_values = {}
+        p_values['adeno_col'] = get_gamma_index_p_value('adeno.', Zcol, samplecolors, cancertypes, colors_dict, drop_Other=drop_Other)
+        p_values['adeno_row'] = get_gamma_index_p_value('adeno.', Zrow, samplecolors, cancertypes, colors_dict, drop_Other=drop_Other)
+        p_values['organ_col'] = get_gamma_index_p_value('organ', Zcol, samplecolors, cancertypes, colors_dict, drop_Other=drop_Other)
+        p_values['organ_row'] = get_gamma_index_p_value('organ', Zrow, samplecolors, cancertypes, colors_dict, drop_Other=drop_Other)
+        return p_values
+
     (Zrow, Zcol) = plot_clustermap(aucs, samplecolors, legend_colors, method='average', row = 'row', col = 'col', optimal_ordering=True)
     plt.savefig(picklefile+'.crossclassificationheatmap.pdf', bbox_inches='tight')
+
+    cancertypes = aucs.index.tolist()
+    p_values = get_all_gamma_index_p_values(Zrow, Zcol, samplecolors, cancertypes, colors_dict, drop_Other=True)
+    return p_values
 
 def plot_subtype_counts(counts_file, ax=None, plot=True):
     counts = pd.read_csv(counts_file)
