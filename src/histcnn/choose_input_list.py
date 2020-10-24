@@ -132,7 +132,7 @@ def merge_cache_stats(cache_stats_directory):
 def load_and_filter_slides_metadata(cancer_types=['LUAD'], optical_zoom=[40],
                                    sample_type_ids = [1, 11], vendor='aperio',
                                    digital_zoom = ('level_2__downsample',16),
-                                   TCGA_metadata = 'data/TCGA_slide_images_metadata.txt'):
+                                   TCGA_metadata = DATA_PATH+'/TCGA_slide_images_metadata.txt'):
     
     df = pd.read_csv(TCGA_metadata, index_col=0, low_memory=False)
     df['CancerType'] = df['GCSurl'].map(lambda x:x.split('/')[6][5:])
