@@ -96,7 +96,7 @@ def fetch_gcs_filenames(cache_gcs_path, output_file):
 
     
 def get_svs_metadata(cancertype,
-                     all_svs_metadata = 'data/TCGA_slide_images_metadata.txt',
+                     all_svs_metadata = DATA_PATH+'/TCGA_slide_images_metadata.txt',
                      AppMags = [20, 40], sample_types = [1, 11], vendor = 'aperio'):
     svs_metadata = pd.read_csv(all_svs_metadata, index_col=0, low_memory=False)
 
