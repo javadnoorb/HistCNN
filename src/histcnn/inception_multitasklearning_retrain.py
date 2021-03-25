@@ -31,7 +31,7 @@ import random
 import re
 import sys
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from tensorflow.python.framework import graph_util
 from tensorflow.python.framework import tensor_shape
@@ -65,13 +65,13 @@ def ensure_dir_exists(dir_name):
     """
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-        
+
 def resize_and_convert_tiff(infile,outfile,image_size):
     from PIL import Image
-    im = Image.open(infile)    
+    im = Image.open(infile)
     im.thumbnail(image_size, Image.ANTIALIAS)
     im.save(outfile, "JPEG", quality=100)
-    
+
 def maybe_resize_and_convert_all_tiff(tiff_dir, out_dir, image_size):
     import glob
     infiles = glob.glob(tiff_dir+'*/*.tif')
@@ -81,7 +81,7 @@ def maybe_resize_and_convert_all_tiff(tiff_dir, out_dir, image_size):
         ensure_dir_exists(sub_dir_path)
         outfile_base = os.path.splitext(infile_split[-1])[0]+'.jpg'
         outfile = os.path.join(sub_dir_path,outfile_base)
-        if not os.path.exists(outfile):      
+        if not os.path.exists(outfile):
             sys.stdout.write('\rCreating JPEG file at ' + outfile_base+' '*20)
             sys.stdout.flush()
             resize_and_convert_tiff(infile,outfile,image_size)
@@ -162,15 +162,15 @@ def get_or_create_bottleneck(sess, image_files_metadata_row, jpeg_data_tensor, b
     is_cached = os.path.isfile(image_files_metadata_row[BOTTLENECK_DATAFRAME_KEYWORD])
     if is_cached:
         with open(image_files_metadata_row[BOTTLENECK_DATAFRAME_KEYWORD], 'r') as bottleneck_file:
-            bottleneck_string = bottleneck_file.read()    
-    if not is_cached or bottleneck_string=='':       
-        assert os.path.exists(image_files_metadata_row[IMAGE_DATAFRAME_KEYWORD]),"{} does not exist.".format(image_files_metadata_row[IMAGE_DATAFRAME_KEYWORD])       
+            bottleneck_string = bottleneck_file.read()
+    if not is_cached or bottleneck_string=='':
+        assert os.path.exists(image_files_metadata_row[IMAGE_DATAFRAME_KEYWORD]),"{} does not exist.".format(image_files_metadata_row[IMAGE_DATAFRAME_KEYWORD])
         image_data = gfile.FastGFile(image_files_metadata_row[IMAGE_DATAFRAME_KEYWORD], 'rb').read()
         bottleneck_values = run_bottleneck_on_image(sess, image_data, jpeg_data_tensor, bottleneck_tensor)
         bottleneck_string = ','.join(str(x) for x in bottleneck_values)
         with open(image_files_metadata_row[BOTTLENECK_DATAFRAME_KEYWORD], 'w') as bottleneck_file:
             bottleneck_file.write(bottleneck_string)
-    
+
     bottleneck_values = [float(x) for x in bottleneck_string.split(',')]
     assert len(bottleneck_values)==BOTTLENECK_TENSOR_SIZE,"Cache file {:s} only has {:d} elements, but expected {:d}.".format(image_files_metadata_row[BOTTLENECK_DATAFRAME_KEYWORD],len(bottleneck_values),BOTTLENECK_TENSOR_SIZE)
     return bottleneck_values
@@ -190,7 +190,7 @@ def cache_bottlenecks(sess, image_files_metadata, jpeg_data_tensor, bottleneck_t
         jpeg_data_tensor: Input tensor for jpeg data from file.
         bottleneck_tensor: The penultimate output layer of the graph.
     """
-    
+
     # still not sure how robust tqdm is. Maybe will use the 'old code'
     if use_tqdm_notebook_widget:
         tqdm_notebook.pandas(desc='Caching...')
@@ -225,7 +225,7 @@ def get_random_cached_bottlenecks(sess, image_files_metadata, label_names,
     """
     bottlenecks = []
     filenames = []
-    
+
     if how_many < 0:
         image_files_metadata_batch = image_files_metadata[image_files_metadata['crossval_group'] == category]
     else:
@@ -300,7 +300,7 @@ def _get_batch(tfrecordfileslist, batch_size, label_names, nClass=2, shuffle_bat
 
 def get_batch(tfrecordfileslist, batch_size, label_names, nClass=2, shuffle_batch=True, resampling_label=None, class_probs=None):
 
-    images, labels, imagefilenames = _get_batch(tfrecordfileslist, batch_size, label_names, nClass=nClass, 
+    images, labels, imagefilenames = _get_batch(tfrecordfileslist, batch_size, label_names, nClass=nClass,
                                     shuffle_batch=shuffle_batch, resampling_label=resampling_label,
                                     class_probs=class_probs)
 
@@ -319,7 +319,7 @@ def add_final_training_ops(learning_rate, task_class_counts, bottleneck_input,
 
     with tf.name_scope('custom_final_layer'):
         with tf.name_scope('shared_layer'):
-            with tf.name_scope('weights'): 
+            with tf.name_scope('weights'):
                 shared_layer_weights = tf.Variable(tf.truncated_normal(
                     [BOTTLENECK_TENSOR_SIZE, SHARED_LAYER_OUTPUT_SIZE], stddev=0.001),name='shared_layer_weights')
                 variable_summaries(shared_layer_weights)
@@ -377,9 +377,9 @@ def add_final_training_ops(learning_rate, task_class_counts, bottleneck_input,
         optimizers_dict = {'adam': tf.train.AdamOptimizer(learning_rate=learning_rate),
                            'graddesc': tf.train.GradientDescentOptimizer(learning_rate),
                            'rmsprop': tf.train.RMSPropOptimizer(learning_rate)}
-        
+
         train_step = optimizers_dict[optimizer].minimize(cross_entropy_mean)
-    
+
     return (train_step, cross_entropy_mean, final_softmax_outputs_list)
 
 def add_evaluation_step(final_softmax_outputs_list, labels_onehot_placeholders_list):
@@ -398,17 +398,17 @@ def add_evaluation_step(final_softmax_outputs_list, labels_onehot_placeholders_l
     predictions_list = [None]*num_tasks
     accuracies_list = [None]*num_tasks
     confusion_matrices_list = [None]*num_tasks
-    
+
     for n in range(num_tasks):
         with tf.name_scope('task%d'%n):
             with tf.name_scope('accuracy'):
                 with tf.name_scope('correct_prediction'):
-                    predictions_list[n] = tf.argmax(final_softmax_outputs_list[n], 1)                    
-                    
-                    #from IPython.core.debugger import set_trace; set_trace() 
+                    predictions_list[n] = tf.argmax(final_softmax_outputs_list[n], 1)
+
+                    #from IPython.core.debugger import set_trace; set_trace()
                     correct_prediction = tf.equal(predictions_list[n], tf.argmax(labels_onehot_placeholders_list[n], 1))
                 with tf.name_scope('accuracy'):
-                    accuracies_list[n] = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))   
+                    accuracies_list[n] = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
                     tf.summary.scalar('accuracy', accuracies_list[n])
             with tf.name_scope('confusion'):
                 confusion_matrices_list[n] = tf.confusion_matrix(labels=tf.argmax(labels_onehot_placeholders_list[n], 1),

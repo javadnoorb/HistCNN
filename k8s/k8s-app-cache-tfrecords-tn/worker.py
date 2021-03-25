@@ -5,7 +5,7 @@ import time
 import multiprocessing
 import logging
 import pandas as pd
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from histcnn import (choose_input_list,
                      handle_tfrecords,
                      handle_google_cloud_apis,
@@ -85,10 +85,10 @@ def worker(msg):
     label_names = ['is_tumor']
 
     print('Downloading cache files...')
-    image_files_metadata['cache_values'] = choose_input_list.load_cache_values(image_files_metadata, 
+    image_files_metadata['cache_values'] = choose_input_list.load_cache_values(image_files_metadata,
                                                                                bucket_name = tiles_input_bucket,
                                                                                notebook = False)
-    
+
 #    print('Downloading tiles...')
 #    bucket = handle_google_cloud_apis.gcsbucket(project_id, tiles_input_bucket)
 #    def download_tile(df_row, bucket):

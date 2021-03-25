@@ -5,14 +5,14 @@ Build and train a convolutional neural network with TensorFlow.
 This example is using the MNIST database of handwritten digits
 (http://yann.lecun.com/exdb/mnist/)
 
-This example is using TensorFlow layers API, see 'convolutional_network_raw' 
+This example is using TensorFlow layers API, see 'convolutional_network_raw'
 example for a raw implementation with variables.
 
 Author: Aymeric Damien
 Project: https://github.com/aymericdamien/TensorFlow-Examples/
 """
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # Create the neural network
 def conv_net(x_dict, n_classes, dropout, reuse, is_training):
@@ -57,19 +57,18 @@ def model_fn(features, labels, mode, params):
     # Define loss and optimizer
     loss_op = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=logits_train, labels=tf.cast(labels, dtype=tf.int32)))
-    
-    
+
+
     optimizer = tf.train.AdamOptimizer(learning_rate=params['learning_rate'])
     train_op = optimizer.minimize(loss_op, global_step=tf.train.get_global_step())
 
     # Evaluate the accuracy of the model
     acc_op = tf.metrics.accuracy(labels=labels, predictions=pred_classes)
-    # tf.summary.scalar("acc_op", acc_op) 
-    
+    # tf.summary.scalar("acc_op", acc_op)
+
     # TF Estimators requires to return a EstimatorSpec, that specify
     # the different ops for training, evaluating, ...
-    estim_specs = tf.estimator.EstimatorSpec(mode=mode, predictions=pred_classes, loss=loss_op, 
+    estim_specs = tf.estimator.EstimatorSpec(mode=mode, predictions=pred_classes, loss=loss_op,
                                              train_op=train_op, eval_metric_ops={'accuracy': acc_op})
 
     return estim_specs
-
