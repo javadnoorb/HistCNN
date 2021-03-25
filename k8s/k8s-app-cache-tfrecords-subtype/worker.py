@@ -5,7 +5,7 @@ import time
 import multiprocessing
 import logging
 import pandas as pd
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from histcnn import (choose_input_list,
                      handle_tfrecords,
                      handle_google_cloud_apis,
@@ -84,7 +84,7 @@ def worker(msg):
 
     print('Downloading cache files...')
     image_files_metadata['cache_values'] = choose_input_list.load_cache_values(image_files_metadata, bucket_name=tiles_input_bucket, notebook = False)
-    
+
     crossval_groups = ['training','testing','validation']
     if category not in crossval_groups+['all']:
         raise Exception('Unknown cross validation category.')

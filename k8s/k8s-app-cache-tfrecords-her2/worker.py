@@ -5,7 +5,7 @@ import time
 import multiprocessing
 import logging
 import pandas as pd
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from histcnn import (choose_input_list,
                      handle_tfrecords,
                      handle_google_cloud_apis,
@@ -81,13 +81,13 @@ def worker(msg):
     image_file_metadata_filename = 'data/caches_basic_annotations.txt'
     util.gsutil_cp('{}/{}/caches_basic_annotations.txt'.format(gcs_ann_path, cancertype), 'data/', make_dir=True, payer_project_id=payer_project_id)
     image_files_metadata = pd.read_csv(image_file_metadata_filename, skiprows=range(1, shard_index*shard_length+1), nrows=shard_length)
-    
+
     shard_length_tiles = len(image_files_metadata.index)
 
     label_names = ['cnv']
 
     print('Downloading cache files...')
-    image_files_metadata['cache_values'] = choose_input_list.load_cache_values(image_files_metadata, 
+    image_files_metadata['cache_values'] = choose_input_list.load_cache_values(image_files_metadata,
                                                                                bucket_name = tiles_input_bucket,
                                                                                notebook = False, user_project=payer_project_id)
 

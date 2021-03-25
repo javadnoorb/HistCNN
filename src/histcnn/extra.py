@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import openslide as ops  # installed by using docker (docker exec -it [container-id] bash) and then following this : http://openslide.org/download/
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import seaborn as sns
 import pickle
 # from tqdm import tqdm_notebook as tqdm
@@ -30,17 +30,17 @@ from scipy.cluster.hierarchy import linkage, fcluster
 import pickle
 import pandas as pd
 
-def plot_crossclassification_heatmap(picklefile): 
+def plot_crossclassification_heatmap(picklefile):
     aucs = pickle.load(open(picklefile, 'rb'))
     aucs = pd.Series(aucs)
 
     aucs = aucs.to_frame().reset_index()
     aucs.rename(columns={0:'AUC'}, inplace=True)
 
-    # cancertypes = ['lihc', 'paad', 'prad', 'esca', 
-    #                'stad', 'coad', 'read', 'oc', 
-    #                'ucec', 'blca', 'brca', 'sarc', 
-    #                'thca', 'kirp', 'hnsc', 'lusc', 
+    # cancertypes = ['lihc', 'paad', 'prad', 'esca',
+    #                'stad', 'coad', 'read', 'oc',
+    #                'ucec', 'blca', 'brca', 'sarc',
+    #                'thca', 'kirp', 'hnsc', 'lusc',
     #                'luad', 'kich', 'kirc']
 
     aucs = pd.concat([aucs, aucs['index'].str.upper().str.split('-').apply(pd.Series)], axis=1).rename(columns={0:'TRAIN', 1:'TEST'})#.drop(['index'])
@@ -83,7 +83,7 @@ def plot_crossclassification_heatmap(picklefile):
     samplecolors.loc['HNSC', 'organ'] = colors_dict['Other']
 
     colors_dict.pop('Other')
-    colors_dict.update({'Adenocarcinoma': 'darkgreen', 
+    colors_dict.update({'Adenocarcinoma': 'darkgreen',
                         'Carcinoma (non-adeno)': 'lightgreen',
                         'Other': 'whitesmoke'})
 
@@ -106,7 +106,7 @@ def plot_crossclassification_heatmap(picklefile):
         Zcol = linkage(aucs.T, method=method, metric=metric, optimal_ordering=optimal_ordering)
         Z = {'row': Zrow, 'col': Zcol}
 
-        g = sns.clustermap(aucs, row_linkage=Z[row], col_linkage=Z[col], cmap=cmap, vmax=1, vmin=0, 
+        g = sns.clustermap(aucs, row_linkage=Z[row], col_linkage=Z[col], cmap=cmap, vmax=1, vmin=0,
                            figsize=(len(aucs.columns)/2, len(aucs.index)/2), row_colors=samplecolors, col_colors=samplecolors)
 
         rect = lambda color: plt.Rectangle((0, 0), 1, 1, fc=color, fill=True, edgecolor='black', linewidth=1)
@@ -118,12 +118,12 @@ def plot_crossclassification_heatmap(picklefile):
     from scipy.cluster.hierarchy import dendrogram
     import libpysal
     from esda.gamma import Gamma
-        
+
     def get_gamma_index_p_value(feature, linkage_matrix, samplecolors, cancertypes, colors_dict, drop_Other=True):
         '''
         This function calculates gamma index of spatial autocorrelation for tissue feature labels
-        For further information refer to: 
-        Hubert, Lawrence James, Reg G. Golledge, and Carmen M. Costanzo. 
+        For further information refer to:
+        Hubert, Lawrence James, Reg G. Golledge, and Carmen M. Costanzo.
         "Generalized procedures for evaluating spatial autocorrelation."
         Geographical Analysis 13.3 (1981): 224-233.
         '''
@@ -168,14 +168,14 @@ def plot_subtype_counts(counts_file, ax=None, plot=True):
     tmp = counts.groupby(['tissue', 'tissue-method'])['counts'].sum().unstack(fill_value=0)
 
     sorted_list = counts.groupby('tissue')['counts'].sum().sort_values(ascending=False).index
-    
+
     if plot:
         tmp1 = counts.pivot_table(index='tissue', columns=['crossval_group' , 'tissue-method'], values='counts')
         tmp1 = tmp1.loc[sorted_list]
         tmp1.index = tmp1.index.str.capitalize()
 
 
-        tmp1.plot.bar(stacked=True, ax=ax,#figsize=(8, 4), 
+        tmp1.plot.bar(stacked=True, ax=ax,#figsize=(8, 4),
                       log=False, color=['lightgreen', 'darkgreen', 'red', 'darkred'])
 
         col0 = tmp1.columns.get_level_values(0)
@@ -194,29 +194,29 @@ def plot_subtype_counts(counts_file, ax=None, plot=True):
 
 import copy
 
-def add_bar(ax, x, y, label, color = 'lightblue', ec = 'black', 
+def add_bar(ax, x, y, label, color = 'lightblue', ec = 'black',
             secondarycolor='darkgreen', w = 0.05, label_offset=0.1, set_xlabels=True):
     if label in ['micro-average','macro-average']:
         color = secondarycolor
-    ax.add_patch(plt.Rectangle((x, 0), w, y, alpha=1, edgecolor=ec, facecolor=color))    
+    ax.add_patch(plt.Rectangle((x, 0), w, y, alpha=1, edgecolor=ec, facecolor=color))
     if set_xlabels:
-        ax.text(x + w/2, -label_offset, label, rotation=90, va='top', 
+        ax.text(x + w/2, -label_offset, label, rotation=90, va='top',
                 ha='center', fontsize=14, fontweight='normal')
-    
+
 def group_barplot(ax, y_dict, tissue, x, color = 'lightblue', secondarycolor='darkgreen',
-                  ec = 'black', w = 0.05, tissue_offset=0.01, label_offset=0.1, set_xlabels=True):   
+                  ec = 'black', w = 0.05, tissue_offset=0.01, label_offset=0.1, set_xlabels=True):
     for label, auc in y_dict.items():
         x += w
-        add_bar(ax, x, auc, label, color=color, ec=ec, w=w, 
+        add_bar(ax, x, auc, label, color=color, ec=ec, w=w,
                 secondarycolor=secondarycolor, label_offset=label_offset, set_xlabels=set_xlabels)
 #         ax.plot([x, x+w], [y_dict['micro-average'], y_dict['micro-average']], 'r.', linewidth=2)
     if set_xlabels:
-        ax.text(x - len(y_dict)*w/2+w, -tissue_offset, tissue.upper(), 
-                rotation=0, va='top', ha='center', color='red', 
+        ax.text(x - len(y_dict)*w/2+w, -tissue_offset, tissue.upper(),
+                rotation=0, va='top', ha='center', color='red',
                 fontsize=12, fontweight='normal')
 
 def plot_all_aucs(aucs, ylabel='AUC', w = 1, bargaps_factor=2, show_legend = True,
-                  tissue_offset=0.01, label_offset=0.1, ax=None, set_xlabels=True):    
+                  tissue_offset=0.01, label_offset=0.1, ax=None, set_xlabels=True):
 #     fig, ax = plt.subplots(figsize=(17,3))
 
     bargaps = w*bargaps_factor
@@ -227,18 +227,18 @@ def plot_all_aucs(aucs, ylabel='AUC', w = 1, bargaps_factor=2, show_legend = Tru
         if aucvals.get('micro-average') or aucvals.get('macro-average'):
             y_micro = aucvals.pop('micro-average')
             y_macro = aucvals.pop('macro-average')
-            
+
             x_midpoint = x + len(aucvals)*w/2+w
             ax.plot([x_midpoint], [y_micro], 'rx')
             ax.plot([x_midpoint], [y_macro], 'ro')
-            
+
             x_midpoints.append(x_midpoint)
-            
+
             if show_legend:
                 ax.legend(['micro-average', 'macro-average'], loc='upper left', bbox_to_anchor=(1.0, 1.0))
 
-        group_barplot(ax, aucvals, tissue, x, w=w, color = 'lightgreen', ec = 'black', 
-                      secondarycolor='darkgreen', tissue_offset=tissue_offset, 
+        group_barplot(ax, aucvals, tissue, x, w=w, color = 'lightgreen', ec = 'black',
+                      secondarycolor='darkgreen', tissue_offset=tissue_offset,
                       label_offset=label_offset, set_xlabels=set_xlabels)
         x += len(aucvals) * w + bargaps
 
@@ -246,14 +246,14 @@ def plot_all_aucs(aucs, ylabel='AUC', w = 1, bargaps_factor=2, show_legend = Tru
     ax.set_ylim(bottom=0.);
     ax.set_xticks([]);
     ax.set_ylabel(ylabel, fontsize=16, fontweight='normal');
-    
+
     return x_midpoints
 
 # _, ax = plt.subplots(figsize=(17,3))
 # plot_all_aucs(aucs['pertile'], ax=ax)
 
 
-def filter_run_results(image_files_metadata, predictions_list, 
+def filter_run_results(image_files_metadata, predictions_list,
                        imagefilenames, final_softmax_outputs_list,
                        tissue_method = ['FFPE']):
     tiles_subset = image_files_metadata[image_files_metadata['tissue-method'].isin(tissue_method)]
@@ -275,7 +275,7 @@ def filter_run_results(image_files_metadata, predictions_list,
     final_softmax_outputs_list = [run_df[final_softmax_outputs_list_colnames].values]
     imagefilenames = run_df['imagefilenames'].values
     predictions_list = [run_df['predictions_list'].values]
-    
+
     return predictions_list, imagefilenames, final_softmax_outputs_list
 
 
@@ -288,15 +288,15 @@ def get_subtype_aucs_from_pickles(pickle_path, tissues, pickel_prefix = 'run_cnn
 
         pbar.set_description("%s: load data" % tissue)
 
-        [image_files_metadata, test_accuracies_list, 
-         predictions_list, confusion_matrices_list, 
+        [image_files_metadata, test_accuracies_list,
+         predictions_list, confusion_matrices_list,
          imagefilenames, final_softmax_outputs_list] = pickle.load(open(picklefile, 'rb'))
-        
+
         if tissue_method!=None:
-            predictions_list, imagefilenames, final_softmax_outputs_list = filter_run_results(image_files_metadata, predictions_list,  
+            predictions_list, imagefilenames, final_softmax_outputs_list = filter_run_results(image_files_metadata, predictions_list,
                                                                                       imagefilenames, final_softmax_outputs_list,
                                                                                       tissue_method = tissue_method)
-        
+
         pbar.set_description("%s: calculate per tile AUCs" % tissue)
         class_names = plotting_cnn.get_classnames(image_files_metadata)
         auc = plotting_cnn.plot_pertile_roc(imagefilenames, predictions_list, final_softmax_outputs_list, image_files_metadata, plot_results=False)
@@ -376,7 +376,7 @@ def get_counts(counts_filename, min_sample_size = 25):
     counts['crossval_group'] = counts['crossval_group'].replace({'validation':'testing'})
     counts = counts.groupby(['crossval_group', 'label', 'cancertype'])['counts'].sum().reset_index()
 
-    
+
     tmp = counts.groupby(['cancertype', 'label'])['counts'].sum().unstack(fill_value=0)
     cancertypes = tmp[(tmp >= min_sample_size).all(axis=1)].index
     counts = counts[counts['cancertype'].isin(cancertypes)]

@@ -5,7 +5,7 @@ import time
 import multiprocessing
 import logging
 import pandas as pd
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import pickle
 from histcnn import (choose_input_list,
                      handle_tfrecords,
@@ -63,15 +63,15 @@ def mark_in_progress(client, task_id):
         task['status'] = 'InProgress'
         client.put(task)
 
-def cross_classify(cancertype1, cancertype2, include_training_set=True, train_test_percentage = [70, 30], 
+def cross_classify(cancertype1, cancertype2, include_training_set=True, train_test_percentage = [70, 30],
                    label_terms=['normal', 'tumor'], labal_names = ['cnv'], nClass = 2):
     if cancertype1 == cancertype2:
         include_training_set = False
     print('cross classify {:s} and {:s} ...'.format(cancertype1, cancertype2))
-    
+
 
     saved_model_path = os.path.join('/sdata', results_path, 'saved_models', cancertype1, '')
-    tfrecpath = os.path.join('/sdata', pancancer_tfrecords_path, cancertype2, '')  
+    tfrecpath = os.path.join('/sdata', pancancer_tfrecords_path, cancertype2, '')
     image_file_metadata_filename = os.path.join('/sdata', annotations_path, cancertype2, 'caches_basic_annotations.txt')
 
     print('copying files from GCS')
@@ -95,8 +95,8 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
 #     test_batch_size = run_classification.get_total_tfrec_count(tfrecordfileslist)
     test_batch_size = len(image_files_metadata)
 
-    
-    
+
+
     print('running the CNN')
 
     test_accuracies_list, predictions_list, confusion_matrices_list, imagefilenames, final_softmax_outputs_list = \
@@ -105,25 +105,25 @@ def cross_classify(cancertype1, cancertype2, include_training_set=True, train_te
 
     print('caclulating the AUC')
     votes, predictions_df = plotting_cnn.get_per_slide_average_predictions(image_files_metadata, imagefilenames, predictions_list, ['label'])
-    
+
     roc_auc = {}
     roc_auc['perslide'] = plotting_cnn.plot_perslide_roc(predictions_df, plot_results=False)
-    
+
     roc_auc['pertile'] = plotting_cnn.plot_pertile_roc(imagefilenames, predictions_list, final_softmax_outputs_list, image_files_metadata, plot_results=False)
-    
+
     print('storing the output')
-    jsonfile = 'roc_auc_{:s}_{:s}.json'.format(cancertype1, cancertype2)	
+    jsonfile = 'roc_auc_{:s}_{:s}.json'.format(cancertype1, cancertype2)
     json.dump(roc_auc, open(jsonfile, 'w'))
 
     util.gsutil_cp(jsonfile, gcs_output_path, payer_project_id=payer_project_id)
 
     # save output to pickle file
-    pickle_dir = os.path.join(results_path, 'pickles/pickles_train{:d}_test{:d}_pickled/'.format(*train_test_percentage))    
+    pickle_dir = os.path.join(results_path, 'pickles/pickles_train{:d}_test{:d}_pickled/'.format(*train_test_percentage))
     pickle_path = os.path.join(pickle_dir, 'run_cnn_output_{:s}_{:s}.pkl'.format(cancertype1, cancertype2))
-    
+
     util.mkdir_if_not_exist('/sdata/' + pickle_dir)
-    pickle.dump([image_files_metadata, test_accuracies_list, predictions_list, 
-                 confusion_matrices_list, imagefilenames, final_softmax_outputs_list], 
+    pickle.dump([image_files_metadata, test_accuracies_list, predictions_list,
+                 confusion_matrices_list, imagefilenames, final_softmax_outputs_list],
                 open('/sdata/' + pickle_path, 'wb'))
 
     util.gsutil_cp(os.path.join('/sdata', pickle_path), os.path.join('gs://'+input_bucket, pickle_path), payer_project_id=payer_project_id)
@@ -143,7 +143,7 @@ def worker(msg):
 
     cancertype1 = params['cancertype1']
     cancertype2 = params['cancertype2']
-	
+
     cross_classify(cancertype1, cancertype2, label_terms=['not amplified', 'amplified'])
 
     elapsed_time_s = round((time.time() - start_time), 1)  # in seconds
@@ -199,5 +199,3 @@ while processes:
     # If there are still processes running, sleeps the thread.
     if processes:
         time.sleep(SLEEP_TIME)
-
-

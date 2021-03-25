@@ -4,7 +4,7 @@ from google.cloud import datastore
 import time
 import multiprocessing
 import pandas as pd
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from histcnn import (choose_input_list,
                      handle_tfrecords,
                      handle_google_cloud_apis,
@@ -79,12 +79,12 @@ def run_tumor_normal_classification(cancertype, how_many_training_steps = 2000, 
     input_bucket_path = 'gs://'+input_bucket+'/'
     util.gsutil_cp(os.path.join(input_bucket_path, tfrecords_path, 'tfrecord*'), '/sdata/'+ tfrecords_path, make_dir=True)
     util.gsutil_cp(os.path.join(input_bucket_path, image_file_metadata_filename), '/sdata/'+ image_file_metadata_filename, make_dir=False)
-   
+
     # output paths
     trecords_prefix = '/sdata/'+ tfrecords_path + 'tfrecord'
     saved_model_path = os.path.join(results_path, 'saved_models/{:s}'.format(cancertype))
     tensorboard_path = os.path.join(results_path, 'tensorboard_logs/{:s}'.format(cancertype))
-    pickle_path = os.path.join(results_path, 
+    pickle_path = os.path.join(results_path,
                                'pickles/pickles_train{:d}_test{:d}/run_cnn_output_{:s}.pkl'.format(*train_test_percentage, cancertype))
 
     tfrecordfiles = glob.glob('{:s}*'.format(trecords_prefix))
@@ -113,13 +113,13 @@ def run_tumor_normal_classification(cancertype, how_many_training_steps = 2000, 
                                                                         train_batch_size = 512, how_many_training_steps=how_many_training_steps, avoid_gpu_for_testing=avoid_gpu_for_testing,
                                                                         do_not_train = do_not_train, pos_weight = pos_weight, dropout_keep_prob = dropout_keep_prob,
                                                                         saved_model_path = os.path.join('/sdata', saved_model_path, 'mychckpt'),
-                                                                        summaries_dir = '/sdata/'+ tensorboard_path, optimizer = optimizer, 
+                                                                        summaries_dir = '/sdata/'+ tensorboard_path, optimizer = optimizer,
                                                                         class_probs=class_probs)
 
     util.mkdir_if_not_exist(os.path.dirname('/sdata/' + pickle_path))
 
-    pickle.dump([image_files_metadata, test_accuracies_list, predictions_list, 
-                 confusion_matrices_list, imagefilenames, final_softmax_outputs_list], 
+    pickle.dump([image_files_metadata, test_accuracies_list, predictions_list,
+                 confusion_matrices_list, imagefilenames, final_softmax_outputs_list],
                 open('/sdata/' + pickle_path, 'wb'))
 
     util.gsutil_cp(os.path.join('/sdata', saved_model_path), os.path.join(input_bucket_path, saved_model_path))
@@ -142,7 +142,7 @@ def worker(msg):
     cancertype = params['cancertype']
 
     label_names = ['is_tumor']
-    
+
     run_tumor_normal_classification(cancertype, label_names = label_names, treat_validation_as_test=True, do_not_train=False)
 
     elapsed_time_s = round((time.time() - start_time), 1)  # in seconds
@@ -198,5 +198,3 @@ while processes:
     # If there are still processes running, sleeps the thread.
     if processes:
         time.sleep(SLEEP_TIME)
-
-
