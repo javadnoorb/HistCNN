@@ -50,7 +50,7 @@ def CropSlideCoordRatiosV3(Slide,thumbnail_size = (200,200),
 
     
     thumb = np.asarray(Slide.get_thumbnail(thumbnail_size)) # create thumbnail (benefits: smaller, less computation and memory)
-    imgray = 1-skc.rgb2grey(thumb) # convert to gray scale
+    imgray = 1-skc.rgb2gray(thumb) # convert to gray scale
     segmentation = imgray>threshold_otsu(imgray) # threshold according to otsu's method
     segmentation_closed = ndi.morphology.binary_closing(segmentation,iterations=5) # do morphological closing on segmentation to remove small details    
     segmentation_masked = segmentation & segmentation_closed # this worked in removing narrow image margins which were different from background.
